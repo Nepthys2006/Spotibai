@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base: #121212;
+  --color-surface: #181818;
+  --color-card: #1e1e1e;
+  --color-elevated: #2a2a2a;
+  --color-line: #2e2e2e;
+  --color-accent: #22c55e;
+  --color-accent-strong: #16a34a;
+  --color-ink: #f5f5f5;
+  --color-muted: #a7a7a7;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  background-color: var(--color-base);
+}
+
+body {
+  background-color: var(--color-base);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Visible keyboard focus everywhere */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Slim dark scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+
+/* Range inputs (seek / volume placeholders) */
+input[type="range"] {
+  accent-color: var(--color-accent);
+  height: 1.25rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
