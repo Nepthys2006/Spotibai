@@ -179,14 +179,21 @@ async function countOf(table: string): Promise<number> {
 }
 
 async function bucketBytes(bucket: string): Promise<number> {
-  const { data, error } = await supabase.storage
-    .from(bucket)
-    .list("", { limit: 1000 });
-  if (error) throw error;
+  const PAGE_SIZE = 1000;
   let total = 0;
-  for (const obj of data ?? []) {
-    const size = (obj.metadata as { size?: unknown } | null)?.size;
-    if (typeof size === "number") total += size;
+  let offset = 0;
+  for (;;) {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list("", { limit: PAGE_SIZE, offset });
+    if (error) throw error;
+    const page = data ?? [];
+    for (const obj of page) {
+      const size = (obj.metadata as { size?: unknown } | null)?.size;
+      if (typeof size === "number") total += size;
+    }
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
   }
   return total;
 }

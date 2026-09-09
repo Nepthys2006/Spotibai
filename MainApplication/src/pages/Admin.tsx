@@ -141,8 +141,8 @@ export function Admin() {
       <div>
         <h1 className="text-2xl font-bold">Admin dashboard</h1>
         <p className="mt-1 text-sm text-muted">
-          Uploads, catalog upkeep, roles, and usage at a glance. Mutations and
-          role checks are wired in later phases.
+          Uploads, catalog upkeep, roles, and usage at a glance. Changes here
+          apply immediately and are recorded in the audit log.
         </p>
       </div>
 
@@ -153,22 +153,22 @@ export function Admin() {
         <StatCard
           label="Tracks"
           value={stats ? String(stats.tracks) : "—"}
-          hint="Live count lands with data"
+          hint="Total in the catalog"
         />
         <StatCard
           label="Users"
           value={stats ? String(stats.users) : "—"}
-          hint="Live count lands with data"
+          hint="Total registered profiles"
         />
         <StatCard
           label="Playlists"
           value={stats ? String(stats.playlists) : "—"}
-          hint="Live count lands with data"
+          hint="Total across all users"
         />
         <StatCard
           label="Storage used"
           value={stats ? formatBytes(stats.storageBytes) : "—"}
-          hint="Bucket totals land with data"
+          hint="Across audio and covers buckets"
         />
       </section>
 
@@ -454,8 +454,7 @@ export function Admin() {
                     colSpan={3}
                     className="px-4 py-6 text-center text-sm text-muted"
                   >
-                    No users listed — roles and promotion controls land with the
-                    admin pass.
+                    No users found.
                   </td>
                 </tr>
               ) : (
