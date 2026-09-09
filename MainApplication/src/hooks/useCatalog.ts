@@ -22,6 +22,8 @@ export interface Track {
   artist_id: string;
   album_id: string | null;
   duration_ms: number | null;
+  storage_path: string;
+  cover_path: string | null;
   artist_name: string | null;
   album_title: string | null;
 }
@@ -32,6 +34,8 @@ interface RawTrack {
   artist_id: string;
   album_id: string | null;
   duration_ms: number | null;
+  storage_path: string;
+  cover_path: string | null;
   artists: { name: string } | { name: string }[] | null;
   albums: { title: string } | { title: string }[] | null;
 }
@@ -57,13 +61,15 @@ function toTrack(row: RawTrack): Track {
     artist_id: row.artist_id,
     album_id: row.album_id,
     duration_ms: row.duration_ms,
+    storage_path: row.storage_path,
+    cover_path: row.cover_path,
     artist_name: pickName(row.artists),
     album_title: pickTitle(row.albums),
   };
 }
 
 const TRACK_SELECT =
-  "id,title,artist_id,album_id,duration_ms,artists(name),albums(title)";
+  "id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title)";
 
 async function fetchTracks(limit: number): Promise<Track[]> {
   const { data, error } = await supabase

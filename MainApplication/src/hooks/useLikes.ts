@@ -36,7 +36,7 @@ export function useLikedSongs() {
       const { data, error } = await supabase
         .from("liked_tracks")
         .select(
-          "track_id,created_at,tracks(id,title,artist_id,album_id,duration_ms,artists(name),albums(title))",
+          "track_id,created_at,tracks(id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title))",
         )
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -49,6 +49,8 @@ export function useLikedSongs() {
           artist_id: string;
           album_id: string | null;
           duration_ms: number | null;
+          storage_path: string;
+          cover_path: string | null;
           artists: { name: string } | { name: string }[] | null;
           albums: { title: string } | { title: string }[] | null;
         } | null;
@@ -67,6 +69,8 @@ export function useLikedSongs() {
                 artist_id: t.artist_id,
                 album_id: t.album_id,
                 duration_ms: t.duration_ms,
+                storage_path: t.storage_path,
+                cover_path: t.cover_path,
                 artist_name: artistRel
                   ? Array.isArray(artistRel)
                     ? (artistRel[0]?.name ?? null)

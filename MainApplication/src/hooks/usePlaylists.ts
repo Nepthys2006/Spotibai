@@ -74,6 +74,8 @@ interface RawEntry {
     artist_id: string;
     album_id: string | null;
     duration_ms: number | null;
+    storage_path: string;
+    cover_path: string | null;
     artists: { name: string } | { name: string }[] | null;
     albums: { title: string } | { title: string }[] | null;
   } | { id: string }[] | null;
@@ -94,6 +96,8 @@ function toEntry(row: RawEntry): PlaylistEntry {
           artist_id: t.artist_id,
           album_id: t.album_id,
           duration_ms: t.duration_ms,
+          storage_path: t.storage_path,
+          cover_path: t.cover_path,
           artist_name: artistRel
             ? Array.isArray(artistRel)
               ? (artistRel[0]?.name ?? null)
@@ -118,7 +122,7 @@ export function usePlaylistEntries(playlistId: string | undefined) {
       const { data, error } = await supabase
         .from("playlist_tracks")
         .select(
-          "playlist_id,track_id,position,tracks(id,title,artist_id,album_id,duration_ms,artists(name),albums(title))",
+          "playlist_id,track_id,position,tracks(id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title))",
         )
         .eq("playlist_id", playlistId!)
         .order("position", { ascending: true });
