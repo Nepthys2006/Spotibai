@@ -6,6 +6,7 @@
 !.env.example
 
 # ── Supabase / OpenCode auth — contains OAuth tokens ──
+.opencode/
 .opencode/supabase-auth.json
 .opencode/*.local
 .opencode/auth*.json
