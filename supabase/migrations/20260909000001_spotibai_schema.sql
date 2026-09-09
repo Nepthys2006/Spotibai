@@ -97,7 +97,9 @@ GRANT EXECUTE ON FUNCTION private.is_admin() TO authenticated;
 -- Policies and the role guard call private.is_admin(); callers need schema USAGE
 GRANT USAGE ON SCHEMA private TO authenticated;
 
--- Signup trigger: create profile on new auth user
+-- Signup trigger: create profile on new auth user. Prefers the chosen
+-- display_name from signup metadata (display text only, never authorization),
+-- falls back to email. Rendered output is DOMPurify-sanitized client-side.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -106,7 +108,15 @@ SET search_path = ''
 AS $$
 BEGIN
   INSERT INTO public.profiles (id, display_name, role)
-  VALUES (NEW.id, COALESCE(NEW.email, 'New user'), 'USER')
+  VALUES (
+    NEW.id,
+    COALESCE(
+      NULLIF(LEFT(COALESCE(NEW.raw_user_meta_data->>'display_name', ''), 80), ''),
+      NEW.email,
+      'New user'
+    ),
+    'USER'
+  )
   ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;

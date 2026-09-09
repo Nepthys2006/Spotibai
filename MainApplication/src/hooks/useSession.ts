@@ -55,7 +55,7 @@ export function useRole() {
   const role = profile?.role ?? null;
   return {
     role,
-    isAdmin: role === "admin",
+    isAdmin: role === "ADMIN",
     isLoading: sessionLoading || profileLoading,
     error: error ?? null,
     user,

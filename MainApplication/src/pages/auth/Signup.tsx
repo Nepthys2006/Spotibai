@@ -6,7 +6,7 @@ import { supabase } from "../../lib/supabase.ts";
 
 /** Validation schema kept for the auth-wiring pass — no submit logic yet. */
 export const signupSchema = z.object({
-  displayName: z.string().min(1, "Enter a display name").max(60),
+  displayName: z.string().trim().min(1, "Enter a display name").max(60),
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Use at least 8 characters"),
 });
