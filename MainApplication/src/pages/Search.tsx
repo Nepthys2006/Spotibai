@@ -1,10 +1,12 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { Card, EmptyState } from "../components/ui.tsx";
+import { TrackRow } from "../components/TrackRow.tsx";
 import {
   formatDuration,
   useCatalogSearch,
   useDebouncedValue,
 } from "../hooks/useCatalog.ts";
+import { useLikedTrackIds, useToggleLike } from "../hooks/useLikes.ts";
 import { usePlaylistSearch } from "../hooks/usePlaylists.ts";
 import { sanitizeText, useSession } from "../hooks/useSession.ts";
 
@@ -20,6 +22,14 @@ export function Search() {
   const artistHits = user ? (artists.data ?? []) : [];
   const albumHits = user ? (albums.data ?? []) : [];
   const playlistHits = user ? (playlists.data ?? []) : [];
+  const likedIdsQuery = useLikedTrackIds();
+  const toggleLike = useToggleLike();
+  const likedIds = likedIdsQuery.data ?? new Set<string>();
+  const trackQueueIds = trackHits.map((t) => t.id);
+  const handleToggleLike = (trackId: string) => {
+    if (!user) return;
+    toggleLike.mutate({ trackId, liked: likedIds.has(trackId) });
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -62,6 +72,26 @@ export function Search() {
             Showing structure for <span className="text-neutral-100">“{query}”</span> —
             live results land with the data pass.
           </p>
+          {trackHits.length > 0 ? (
+            <section aria-label="Songs">
+              <ol className="flex flex-col gap-1">
+                {trackHits.map((t, i) => (
+                  <TrackRow
+                    key={t.id}
+                    id={t.id}
+                    index={i}
+                    title={sanitizeText(t.title)}
+                    subtitle={sanitizeText(t.artist_name ?? "Unknown artist")}
+                    duration={formatDuration(t.duration_ms)}
+                    queueIds={trackQueueIds}
+                    liked={likedIds.has(t.id)}
+                    onToggleLike={handleToggleLike}
+                    cover_path={t.cover_path}
+                  />
+                ))}
+              </ol>
+            </section>
+          ) : null}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {trackHits.length === 0 ? (
               <Card title="No matches yet" subtitle="Tracks">
@@ -69,20 +99,7 @@ export function Search() {
                   Nothing indexed under this query in the placeholder view.
                 </p>
               </Card>
-            ) : (
-              trackHits.map((t) => (
-                <Card
-                  key={t.id}
-                  title={sanitizeText(t.title)}
-                  subtitle={sanitizeText(t.artist_name ?? "Unknown artist")}
-                >
-                  <p className="mt-1 text-xs leading-relaxed text-muted">
-                    {sanitizeText(t.album_title ?? "Single")} ·{" "}
-                    {formatDuration(t.duration_ms)}
-                  </p>
-                </Card>
-              ))
-            )}
+            ) : null}
             {artistHits.length === 0 ? (
               <Card title="No matches yet" subtitle="Artists">
                 <p className="mt-1 text-xs leading-relaxed text-muted">

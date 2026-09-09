@@ -1,15 +1,27 @@
 import { NavLink } from "react-router-dom";
+import { useRole } from "../hooks/useSession.ts";
 import { Icon, type IconName } from "./icons.tsx";
 
-const links: { to: string; label: string; end: boolean; icon: IconName }[] = [
+const links: {
+  to: string;
+  label: string;
+  end: boolean;
+  icon: IconName;
+  adminOnly?: boolean;
+}[] = [
   { to: "/", label: "Home", end: true, icon: "home" },
   { to: "/search", label: "Search", end: false, icon: "search" },
   { to: "/library", label: "Library", end: false, icon: "library" },
   { to: "/liked", label: "Liked Songs", end: false, icon: "heart" },
-  { to: "/admin", label: "Admin", end: false, icon: "settings" },
+  { to: "/admin", label: "Admin", end: false, icon: "settings", adminOnly: true },
 ];
 
+function visibleLinks(isAdmin: boolean) {
+  return links.filter((l) => !l.adminOnly || isAdmin);
+}
+
 export function Sidebar() {
+  const { isAdmin } = useRole();
   return (
     <aside
       aria-label="Primary"
@@ -19,7 +31,7 @@ export function Sidebar() {
         Spotibai
       </p>
       <nav className="flex flex-col gap-1">
-        {links.map((l) => (
+        {visibleLinks(isAdmin).map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
@@ -48,13 +60,15 @@ export function Sidebar() {
 }
 
 export function MobileNav() {
+  const { isAdmin } = useRole();
+  const items = visibleLinks(isAdmin);
   return (
     <nav
       aria-label="Mobile"
       className="relative z-30 border-t border-line bg-surface px-2 py-1 md:hidden"
     >
-      <ul className="grid grid-cols-5 gap-1">
-        {links.map((l) => (
+      <ul className={`grid gap-1 ${items.length > 4 ? "grid-cols-5" : "grid-cols-4"}`}>
+        {items.map((l) => (
           <li key={l.to}>
             <NavLink
               to={l.to}

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { usePlayerStore } from "../store/playerStore.ts";
+import { useCoverUrl } from "../lib/coverArt.ts";
 import { Icon } from "./icons.tsx";
 
 /**
@@ -17,6 +19,7 @@ export function TrackRow({
   queueIds,
   liked,
   onToggleLike,
+  cover_path,
 }: {
   id: string;
   index: number;
@@ -26,9 +29,16 @@ export function TrackRow({
   queueIds: string[];
   liked?: boolean;
   onToggleLike?: (trackId: string) => void;
+  cover_path?: string | null;
 }) {
   const { currentId, isPlaying, playQueue } = usePlayerStore();
   const active = currentId === id;
+  const signedCover = useCoverUrl(cover_path ?? null);
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [signedCover]);
+  const showCover = !active && Boolean(signedCover) && !imgFailed;
 
   return (
     <li
@@ -50,12 +60,19 @@ export function TrackRow({
       >
         <span
           aria-hidden="true"
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+          className={`relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-lg ${
             active ? "bg-accent text-black" : "bg-elevated text-sm font-bold text-muted"
           }`}
         >
           {active ? (
             <Icon name={isPlaying ? "pause" : "play"} size={16} />
+          ) : showCover ? (
+            <img
+              src={signedCover ?? ""}
+              alt=""
+              onError={() => setImgFailed(true)}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           ) : (
             title.slice(0, 1).toUpperCase()
           )}

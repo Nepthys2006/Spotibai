@@ -8,7 +8,9 @@ import {
   TextInput,
 } from "../components/ui.tsx";
 import { Icon } from "../components/icons.tsx";
+import { PlaylistCollage } from "../components/PlaylistCollage.tsx";
 import { formatDuration, useTracks } from "../hooks/useCatalog.ts";
+import { usePlayerStore } from "../store/playerStore.ts";
 import { useLikedTrackIds, useToggleLike } from "../hooks/useLikes.ts";
 import {
   playlistSchema,
@@ -19,9 +21,10 @@ import {
   usePlaylistEntries,
   useRemoveTrackFromPlaylist,
   useRenamePlaylist,
+  useSetPlaylistCover,
   useSetPlaylistVisibility,
 } from "../hooks/usePlaylists.ts";
-import { sanitizeText, useSession } from "../hooks/useSession.ts";
+import { sanitizeText, useRole, useSession } from "../hooks/useSession.ts";
 import { NotFound } from "./NotFound.tsx";
 
 export function PlaylistDetail() {
@@ -39,9 +42,14 @@ export function PlaylistDetail() {
   const renamePlaylist = useRenamePlaylist(id ?? "");
   const setVisibility = useSetPlaylistVisibility(id ?? "");
   const deletePlaylist = useDeletePlaylist();
+  const setCover = useSetPlaylistCover();
+  const { isAdmin } = useRole();
   const [renameError, setRenameError] = useState<string | null>(null);
   const [manageError, setManageError] = useState<string | null>(null);
   const [rowError, setRowError] = useState<string | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [coverNotice, setCoverNotice] = useState<string | null>(null);
+  const [coverPending, setCoverPending] = useState(false);
 
   const loading = playlistQuery.isLoading || entriesQuery.isLoading;
   const playlist =
@@ -51,6 +59,12 @@ export function PlaylistDetail() {
   const likedIds = likedIdsQuery.data ?? new Set<string>();
   const catalog = !catalogQuery.error ? (catalogQuery.data ?? []) : [];
   const isOwner = Boolean(user && playlist && playlist.owner_id === user.id);
+  const { currentId, isPlaying, playQueue } = usePlayerStore();
+  const queueIds = entries.map((e) => e.track_id);
+  const addable = catalog
+    .filter((t) => !entries.some((e) => e.track_id === t.id))
+    .slice(0, 10);
+  const addableQueueIds = addable.map((t) => t.id);
 
   if (!user || loading) {
     if (loading && user) return null;
@@ -174,15 +188,34 @@ export function PlaylistDetail() {
     }
   };
 
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !id || coverPending) return;
+    setCoverError(null);
+    setCoverNotice(null);
+    setCoverPending(true);
+    try {
+      await setCover.mutateAsync({ playlistId: id, file });
+      setCoverNotice("Cover updated.");
+    } catch (err) {
+      setCoverError(
+        err instanceof Error ? err.message : "Could not update cover.",
+      );
+    } finally {
+      setCoverPending(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-end gap-4">
-        <div
-          aria-hidden="true"
-          className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-elevated text-muted sm:h-36 sm:w-36"
-        >
-          <Icon name="music" size={36} />
-        </div>
+        <PlaylistCollage
+          cover_path={playlist?.cover_path ?? null}
+          covers={entries.map((e) => e.track?.cover_path ?? null)}
+          label={playlist?.name ?? "Evening mix"}
+          className="h-28 w-28 shrink-0 rounded-2xl sm:h-36 sm:w-36"
+        />
         <div className="min-w-0">
           <p className="text-xs text-muted">Playlist</p>
           <h1 className="truncate text-2xl font-bold sm:text-3xl">
@@ -193,6 +226,34 @@ export function PlaylistDetail() {
             {playlist?.is_public ? "Public" : "Private"} · {entries.length}{" "}
             tracks
           </p>
+          {isAdmin ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label
+                htmlFor="playlist-cover"
+                className={`inline-flex min-h-11 cursor-pointer items-center justify-center whitespace-nowrap rounded-full border border-line px-4 py-2 text-xs font-medium text-neutral-200 transition-colors hover:border-neutral-500 ${coverPending ? "pointer-events-none opacity-50" : ""}`}
+              >
+                {coverPending ? "Uploading…" : "Change cover"}
+              </label>
+              <input
+                id="playlist-cover"
+                type="file"
+                accept="image/*"
+                disabled={coverPending}
+                onChange={handleCoverChange}
+                className="sr-only"
+              />
+            </div>
+          ) : null}
+          {coverError ? (
+            <p role="alert" className="mt-1 text-xs text-red-300">
+              {coverError}
+            </p>
+          ) : null}
+          {coverNotice ? (
+            <p aria-live="polite" className="mt-1 text-xs text-accent">
+              {coverNotice}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -216,27 +277,53 @@ export function PlaylistDetail() {
         <ol className="flex flex-col overflow-hidden rounded-2xl border border-line">
           {entries.map((entry, i) => {
             const liked = likedIds.has(entry.track_id);
+            const active = currentId === entry.track_id;
+            const title = sanitizeText(entry.track?.title ?? "Unknown track");
             return (
               <li
                 key={entry.track_id}
-                className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-card px-3 py-2 last:border-0 hover:bg-elevated"
+                className={`flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-3 py-2 last:border-0 ${
+                  active ? "bg-elevated" : "bg-card hover:bg-elevated"
+                }`}
               >
-                <span className="w-6 shrink-0 text-right text-xs tabular-nums text-muted">
+                <span
+                  className={`w-6 shrink-0 text-right text-xs tabular-nums ${active ? "text-accent" : "text-muted"}`}
+                >
                   {i + 1}
                 </span>
-                <CoverThumb label={entry.track?.title ?? "?"} />
-                <div className="min-w-0 flex-1 basis-36 leading-tight">
-                  <p className="truncate text-sm font-medium text-neutral-100">
-                    {sanitizeText(entry.track?.title ?? "Unknown track")}
-                  </p>
-                  <p className="truncate text-xs text-muted">
-                    {sanitizeText(entry.track?.artist_name ?? "Unknown artist")}{" "}
-                    · {sanitizeText(entry.track?.album_title ?? "Single")}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs tabular-nums text-muted">
-                  {formatDuration(entry.track?.duration_ms)}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => playQueue(queueIds, i)}
+                  aria-label={`Play ${title}`}
+                  aria-current={active ? "true" : undefined}
+                  className="flex min-h-11 min-w-0 flex-1 basis-36 items-center gap-3 rounded-lg py-1 text-left"
+                >
+                  {active ? (
+                    <span
+                      aria-hidden="true"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent text-black"
+                    >
+                      <Icon name={isPlaying ? "pause" : "play"} size={16} />
+                    </span>
+                  ) : (
+                    <CoverThumb
+                      label={entry.track?.title ?? "?"}
+                      cover_path={entry.track?.cover_path ?? null}
+                    />
+                  )}
+                  <span className="min-w-0 flex-1 leading-tight">
+                    <span className="block truncate text-sm font-medium text-neutral-100">
+                      {title}
+                    </span>
+                    <span className="block truncate text-xs text-muted">
+                      {sanitizeText(entry.track?.artist_name ?? "Unknown artist")}{" "}
+                      · {sanitizeText(entry.track?.album_title ?? "Single")}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted">
+                    {formatDuration(entry.track?.duration_ms)}
+                  </span>
+                </button>
                 <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
                   <button
                     type="button"
@@ -338,20 +425,24 @@ export function PlaylistDetail() {
               </p>
             ) : (
               <ol className="flex flex-col gap-1">
-                {catalog
-                  .filter((t) => !entries.some((e) => e.track_id === t.id))
-                  .slice(0, 10)
-                  .map((t) => (
+                {addable.map((t, addIndex) => (
                     <li
                       key={t.id}
                       className="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-card"
                     >
-                      <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
-                        {sanitizeText(t.title)}
-                      </span>
-                      <span className="max-w-[38%] shrink-0 truncate text-xs text-muted">
-                        {sanitizeText(t.artist_name ?? "Unknown artist")}
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => playQueue(addableQueueIds, addIndex)}
+                        aria-label={`Play ${sanitizeText(t.title)}`}
+                        className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg text-left"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
+                          {sanitizeText(t.title)}
+                        </span>
+                        <span className="max-w-[38%] shrink-0 truncate text-xs text-muted">
+                          {sanitizeText(t.artist_name ?? "Unknown artist")}
+                        </span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleAdd(t.id)}

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { useCoverUrl } from "../lib/coverArt.ts";
 
 export function Button({
   children,
@@ -164,13 +165,34 @@ export function StatCard({
   );
 }
 
-export function CoverThumb({ label }: { label: string }) {
+export function CoverThumb({
+  label,
+  cover_path,
+}: {
+  label: string;
+  cover_path?: string | null;
+}) {
+  const signedCover = useCoverUrl(cover_path ?? null);
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [signedCover]);
+  const showCover = Boolean(signedCover) && !imgFailed;
   return (
     <div
       aria-hidden="true"
-      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-elevated text-sm font-bold text-muted"
+      className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-elevated text-sm font-bold text-muted"
     >
-      {label.slice(0, 1).toUpperCase()}
+      {showCover ? (
+        <img
+          src={signedCover ?? ""}
+          alt=""
+          onError={() => setImgFailed(true)}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        label.slice(0, 1).toUpperCase()
+      )}
     </div>
   );
 }

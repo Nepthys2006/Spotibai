@@ -24,6 +24,8 @@ export interface Track {
   duration_ms: number | null;
   storage_path: string;
   cover_path: string | null;
+  lyrics_lrc: string | null;
+  lyrics_updated_at: string | null;
   artist_name: string | null;
   album_title: string | null;
 }
@@ -36,6 +38,8 @@ interface RawTrack {
   duration_ms: number | null;
   storage_path: string;
   cover_path: string | null;
+  lyrics_lrc: string | null;
+  lyrics_updated_at: string | null;
   artists: { name: string } | { name: string }[] | null;
   albums: { title: string } | { title: string }[] | null;
 }
@@ -63,13 +67,15 @@ function toTrack(row: RawTrack): Track {
     duration_ms: row.duration_ms,
     storage_path: row.storage_path,
     cover_path: row.cover_path,
+    lyrics_lrc: row.lyrics_lrc,
+    lyrics_updated_at: row.lyrics_updated_at,
     artist_name: pickName(row.artists),
     album_title: pickTitle(row.albums),
   };
 }
 
 const TRACK_SELECT =
-  "id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title)";
+  "id,title,artist_id,album_id,duration_ms,storage_path,cover_path,lyrics_lrc,lyrics_updated_at,artists(name),albums(title)";
 
 async function fetchTracks(limit: number): Promise<Track[]> {
   const { data, error } = await supabase
@@ -144,6 +150,43 @@ export function useAlbums(limit = 12) {
     queryFn: () => fetchAlbums(limit),
     enabled: Boolean(user?.id),
     staleTime: 30_000,
+    retry: 1,
+  });
+}
+
+async function fetchArtistCovers(): Promise<Map<string, string>> {
+  const { data, error } = await supabase
+    .from("tracks")
+    .select("artist_id,cover_path")
+    .not("cover_path", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  const map = new Map<string, string>();
+  const rows = (data ?? []) as unknown as {
+    artist_id: string;
+    cover_path: string | null;
+  }[];
+  for (const row of rows) {
+    if (row.artist_id && row.cover_path && !map.has(row.artist_id)) {
+      map.set(row.artist_id, row.cover_path);
+    }
+  }
+  return map;
+}
+
+/**
+ * First available track cover per artist (newest track with art wins).
+ * Two small columns, covered rows only — feeds artist tiles that have no
+ * image column of their own. Empty map when no tracks carry covers.
+ */
+export function useArtistCovers() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["artist-covers"],
+    queryFn: fetchArtistCovers,
+    enabled: Boolean(user?.id),
+    staleTime: 60_000,
     retry: 1,
   });
 }

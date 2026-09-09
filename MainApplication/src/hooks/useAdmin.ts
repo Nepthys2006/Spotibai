@@ -154,6 +154,8 @@ export interface AdminTrack {
   duration_ms: number | null;
   storage_path: string;
   cover_path: string | null;
+  lyrics_lrc: string | null;
+  lyrics_updated_at: string | null;
 }
 
 export interface AdminUser {
@@ -252,7 +254,7 @@ export function useAdminTracks() {
       const { data, error } = await supabase
         .from("tracks")
         .select(
-          "id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title)",
+          "id,title,artist_id,album_id,duration_ms,storage_path,cover_path,lyrics_lrc,lyrics_updated_at,artists(name),albums(title)",
         )
         .order("created_at", { ascending: false })
         .limit(100);
@@ -265,6 +267,8 @@ export function useAdminTracks() {
         duration_ms: number | null;
         storage_path: string;
         cover_path: string | null;
+        lyrics_lrc: string | null;
+        lyrics_updated_at: string | null;
         artists: { name: string } | { name: string }[] | null;
         albums: { title: string } | { title: string }[] | null;
       }[];
@@ -289,6 +293,8 @@ export function useAdminTracks() {
           duration_ms: r.duration_ms,
           storage_path: r.storage_path,
           cover_path: r.cover_path,
+          lyrics_lrc: r.lyrics_lrc,
+          lyrics_updated_at: r.lyrics_updated_at,
         };
       });
     },
@@ -388,31 +394,52 @@ export function useUploadTrack() {
 export interface UpdateTrackInput {
   id: string;
   meta: TrackMeta;
+  /** Optional manual-LRC lyrics; when provided, `lyrics_updated_at` is set to now. */
+  lyrics_lrc?: string | null;
 }
 
 /** Edit track metadata (artist/album resolved like upload). */
 export function useUpdateTrack() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, meta }: UpdateTrackInput): Promise<void> => {
+    mutationFn: async ({
+      id,
+      meta,
+      lyrics_lrc,
+    }: UpdateTrackInput): Promise<void> => {
       const artistId = await resolveArtistId(meta.artist);
       const albumId = await resolveAlbumId(meta.album, artistId);
       const durationMs =
         meta.durationMs < 1000 ? meta.durationMs * 1000 : meta.durationMs;
+      const patch: {
+        title: string;
+        artist_id: string;
+        album_id: string | null;
+        duration_ms: number;
+        lyrics_lrc?: string | null;
+        lyrics_updated_at?: string;
+      } = {
+        title: meta.title,
+        artist_id: artistId,
+        album_id: albumId,
+        duration_ms: durationMs,
+      };
+      if (lyrics_lrc !== undefined) {
+        patch.lyrics_lrc = lyrics_lrc;
+        patch.lyrics_updated_at = new Date().toISOString();
+      }
       const { error } = await supabase
         .from("tracks")
-        .update({
-          title: meta.title,
-          artist_id: artistId,
-          album_id: albumId,
-          duration_ms: durationMs,
-        })
+        .update(patch)
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-tracks"] });
       queryClient.invalidateQueries({ queryKey: ["tracks"] });
+      queryClient.invalidateQueries({ queryKey: ["track"] });
+      queryClient.invalidateQueries({ queryKey: ["playlist-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["liked-songs"] });
     },
   });
 }

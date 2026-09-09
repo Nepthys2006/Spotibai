@@ -33,9 +33,12 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
-      <div ref={stackRef} className="fixed inset-x-0 bottom-0 z-40 flex flex-col">
-        <MobileNav />
+      <div
+        ref={stackRef}
+        className="fixed inset-x-0 bottom-0 z-40 flex flex-col pb-[env(safe-area-inset-bottom)]"
+      >
         <PlayerBar />
+        <MobileNav />
       </div>
       <QueuePanel />
     </div>

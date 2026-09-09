@@ -16,7 +16,9 @@ export type IconName =
   | "close"
   | "chevronUp"
   | "chevronDown"
-  | "music";
+  | "music"
+  | "user"
+  | "logOut";
 
 const strokePaths: Record<Exclude<IconName, "play" | "pause">, React.ReactNode> = {
   home: (
@@ -99,6 +101,19 @@ const strokePaths: Record<Exclude<IconName, "play" | "pause">, React.ReactNode> 
       <path d="M9 18V5l12-2v13" />
       <circle cx="6" cy="18" r="3" />
       <circle cx="18" cy="16" r="3" />
+    </>
+  ),
+  user: (
+    <>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </>
+  ),
+  logOut: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" x2="9" y1="12" y2="12" />
     </>
   ),
 };

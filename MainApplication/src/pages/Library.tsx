@@ -8,6 +8,7 @@ import {
   SectionHeader,
   TextInput,
 } from "../components/ui.tsx";
+import { PlaylistCollage } from "../components/PlaylistCollage.tsx";
 import { sanitizeText, useSession } from "../hooks/useSession.ts";
 import {
   playlistSchema,
@@ -157,7 +158,13 @@ export function Library() {
                 <Card
                   title={sanitizeText(p.name)}
                   subtitle={`${counts[p.id] ?? 0} tracks · ${p.is_public ? "Public" : "Private"}`}
-                />
+                >
+                  <PlaylistCollage
+                    cover_path={p.cover_path ?? null}
+                    label={p.name}
+                    className="mt-2 aspect-square w-full rounded-xl"
+                  />
+                </Card>
               </Link>
             ))}
           </div>

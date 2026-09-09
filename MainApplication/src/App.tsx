@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell.tsx";
 import { AuthProvider } from "./lib/AuthProvider.tsx";
 import { RequireAdmin } from "./lib/RequireAdmin.tsx";
+import { RequireUser } from "./lib/RequireUser.tsx";
 import { initPredictivePreload } from "./lib/preload.ts";
 import { queryClient } from "./lib/queryClient.ts";
 import { Home } from "./pages/Home.tsx";
@@ -37,6 +38,12 @@ const ResetPassword = lazy(() =>
     default: m.ResetPassword,
   })),
 );
+const Profile = lazy(() =>
+  import("./pages/Profile.tsx").then((m) => ({ default: m.Profile })),
+);
+const NowPlaying = lazy(() =>
+  import("./pages/NowPlaying.tsx").then((m) => ({ default: m.NowPlaying })),
+);
 
 export default function App() {
   useEffect(() => {
@@ -65,6 +72,15 @@ export default function App() {
             <Route path="signup" element={<Signup />} />
             <Route path="login" element={<Login />} />
             <Route path="reset" element={<ResetPassword />} />
+            <Route
+              path="profile"
+              element={
+                <RequireUser>
+                  <Profile />
+                </RequireUser>
+              }
+            />
+            <Route path="now-playing" element={<NowPlaying />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

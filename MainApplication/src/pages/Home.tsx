@@ -1,22 +1,49 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, EmptyState, SectionHeader } from "../components/ui.tsx";
-import { useAlbums, useArtists, useTracks } from "../hooks/useCatalog.ts";
+import { TrackRow } from "../components/TrackRow.tsx";
+import {
+  formatDuration,
+  useAlbums,
+  useArtistCovers,
+  useArtists,
+  useTracks,
+} from "../hooks/useCatalog.ts";
+import { useLikedTrackIds, useToggleLike } from "../hooks/useLikes.ts";
 import { sanitizeText, useSession } from "../hooks/useSession.ts";
+import { useCoverUrl } from "../lib/coverArt.ts";
 
 function SectionCard({
   title,
   subtitle,
+  cover_path,
 }: {
   title: string;
   subtitle: string;
+  cover_path?: string | null;
 }) {
+  const signedCover = useCoverUrl(cover_path ?? null);
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [signedCover]);
+  const showCover = Boolean(signedCover) && !imgFailed;
   return (
     <Card title={title} subtitle={subtitle}>
       <div
         aria-hidden="true"
-        className="mt-2 flex aspect-square items-center justify-center rounded-xl bg-elevated text-2xl font-bold text-muted"
+        className="relative mt-2 flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-elevated text-2xl font-bold text-muted"
       >
-        {title.slice(0, 1).toUpperCase()}
+        {showCover ? (
+          <img
+            src={signedCover ?? ""}
+            alt=""
+            onError={() => setImgFailed(true)}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : (
+          title.slice(0, 1).toUpperCase()
+        )}
       </div>
     </Card>
   );
@@ -27,10 +54,21 @@ export function Home() {
   const tracksQuery = useTracks(5);
   const albumsQuery = useAlbums(4);
   const artistsQuery = useArtists(5);
+  const coversQuery = useArtistCovers();
 
   const tracks = user && !tracksQuery.error ? (tracksQuery.data ?? []) : [];
   const albums = user && !albumsQuery.error ? (albumsQuery.data ?? []) : [];
   const artists = user && !artistsQuery.error ? (artistsQuery.data ?? []) : [];
+  const artistCovers =
+    user && !coversQuery.error ? (coversQuery.data ?? new Map()) : new Map();
+  const likedIdsQuery = useLikedTrackIds();
+  const toggleLike = useToggleLike();
+  const likedIds = likedIdsQuery.data ?? new Set<string>();
+  const queueIds = tracks.map((t) => t.id);
+  const handleToggleLike = (trackId: string) => {
+    if (!user) return;
+    toggleLike.mutate({ trackId, liked: likedIds.has(trackId) });
+  };
   const hasContent =
     tracks.length > 0 || albums.length > 0 || artists.length > 0;
 
@@ -75,16 +113,29 @@ export function Home() {
         />
         <div
           id="home-jump"
-          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+          className={
+            tracks.length > 0
+              ? "flex flex-col gap-1"
+              : "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"
+          }
         >
           {tracks.length > 0 ? (
-            tracks.map((t) => (
-              <SectionCard
-                key={t.id}
-                title={sanitizeText(t.title)}
-                subtitle={sanitizeText(t.artist_name ?? "Unknown artist")}
-              />
-            ))
+            <ol className="flex flex-col gap-1">
+              {tracks.map((t, i) => (
+                <TrackRow
+                  key={t.id}
+                  id={t.id}
+                  index={i}
+                  title={sanitizeText(t.title)}
+                  subtitle={sanitizeText(t.artist_name ?? "Unknown artist")}
+                  duration={formatDuration(t.duration_ms)}
+                  queueIds={queueIds}
+                  liked={likedIds.has(t.id)}
+                  onToggleLike={handleToggleLike}
+                  cover_path={t.cover_path}
+                />
+              ))}
+            </ol>
           ) : (
             <>
               <SectionCard title="Liked Songs" subtitle="Your saved tracks" />
@@ -119,6 +170,7 @@ export function Home() {
                   key={a.id}
                   title={sanitizeText(a.name)}
                   subtitle="Artist"
+                  cover_path={artistCovers.get(a.id) ?? null}
                 />
               ))
           ) : (

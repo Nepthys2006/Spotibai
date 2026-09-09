@@ -18,6 +18,7 @@ import {
   type AdminTrack,
 } from "../hooks/useAdmin.ts";
 import { sanitizeText, useRole, useSession } from "../hooks/useSession.ts";
+import { parseLRC } from "../lib/lyrics.ts";
 
 const actionBtn =
   "inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40";
@@ -38,6 +39,7 @@ export function Admin() {
   const [tableError, setTableError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+  const [lyricsWarn, setLyricsWarn] = useState<string | null>(null);
 
   const stats = statsQuery.data;
   const tracks = !tracksQuery.error ? (tracksQuery.data ?? []) : [];
@@ -105,8 +107,29 @@ export function Admin() {
       return;
     }
     setEditErrors({});
+    const rawLyrics = String(data.get("lyrics") ?? "");
+    const prevLyrics = track.lyrics_lrc ?? "";
+    let lyrics_lrc: string | null | undefined;
+    if (rawLyrics === prevLyrics) {
+      lyrics_lrc = undefined;
+    } else if (rawLyrics.trim() === "") {
+      lyrics_lrc = prevLyrics === "" ? undefined : null;
+    } else {
+      lyrics_lrc = rawLyrics;
+    }
+    if (rawLyrics.trim() !== "" && parseLRC(rawLyrics).length === 0) {
+      setLyricsWarn(
+        "No timed lines found — check the [mm:ss.xx] format. Saved anyway.",
+      );
+    } else {
+      setLyricsWarn(null);
+    }
     try {
-      await updateTrack.mutateAsync({ id: track.id, meta: parsed.data });
+      await updateTrack.mutateAsync({
+        id: track.id,
+        meta: parsed.data,
+        lyrics_lrc,
+      });
       setEditingId(null);
     } catch (err) {
       setTableError(err instanceof Error ? err.message : "Update failed.");
@@ -119,6 +142,7 @@ export function Admin() {
     try {
       await deleteTrack.mutateAsync(track);
       if (editingId === track.id) setEditingId(null);
+      setLyricsWarn(null);
     } catch (err) {
       setTableError(err instanceof Error ? err.message : "Delete failed.");
     }
@@ -363,6 +387,27 @@ export function Admin() {
                               required
                             />
                           </Field>
+                          <div className="sm:col-span-2">
+                            <Field
+                              label="Lyrics (LRC, optional)"
+                              htmlFor={`edit-lyrics-${t.id}`}
+                            >
+                              <textarea
+                                id={`edit-lyrics-${t.id}`}
+                                name="lyrics"
+                                rows={6}
+                                defaultValue={t.lyrics_lrc ?? ""}
+                                spellCheck={false}
+                                placeholder={"[00:12.00] First line\n[00:15.50] Second line"}
+                                className="min-h-32 w-full rounded-lg border border-line bg-elevated px-3.5 py-2.5 font-mono text-xs leading-relaxed text-neutral-100 placeholder:text-neutral-500 hover:border-neutral-500"
+                              />
+                            </Field>
+                            {lyricsWarn ? (
+                              <p aria-live="polite" className="mt-1 text-xs text-amber-200">
+                                {lyricsWarn}
+                              </p>
+                            ) : null}
+                          </div>
                           <div className="flex flex-wrap gap-2 sm:col-span-2">
                             <Button
                               type="submit"
@@ -375,6 +420,7 @@ export function Admin() {
                               onClick={() => {
                                 setEditingId(null);
                                 setEditErrors({});
+                                setLyricsWarn(null);
                               }}
                             >
                               Cancel
@@ -401,11 +447,12 @@ export function Admin() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             type="button"
-                            onClick={() => {
-                              setEditingId(t.id);
-                              setEditErrors({});
-                              setTableError(null);
-                            }}
+                          onClick={() => {
+                            setEditingId(t.id);
+                            setEditErrors({});
+                            setTableError(null);
+                            setLyricsWarn(null);
+                          }}
                             disabled={!canMutate}
                             className={actionBtn}
                           >

@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Icon } from "../components/icons.tsx";
+import { TrackRow } from "../components/TrackRow.tsx";
 import { EmptyState } from "../components/ui.tsx";
 import { sanitizeText, useSession } from "../hooks/useSession.ts";
+import { formatDuration } from "../hooks/useCatalog.ts";
 import { useLikedSongs, useToggleLike } from "../hooks/useLikes.ts";
 
 export function LikedSongs() {
@@ -16,6 +18,7 @@ export function LikedSongs() {
     if (!user) return;
     toggleLike.mutate({ trackId, liked: true });
   };
+  const queueIds = liked.map((t) => t.track_id);
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,26 +61,19 @@ export function LikedSongs() {
         />
       ) : (
         <ol className="flex flex-col gap-1">
-          {liked.map((t) => (
-            <li
+          {liked.map((t, i) => (
+            <TrackRow
               key={t.track_id}
-              className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-card"
-            >
-              <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
-                {sanitizeText(t.track?.title ?? "Unknown track")}
-              </span>
-              <span className="max-w-[35%] shrink-0 truncate text-sm text-muted">
-                {sanitizeText(t.track?.artist_name ?? "Unknown artist")}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleUnlike(t.track_id)}
-                aria-label="Unlike"
-                className="ml-auto inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-xs text-muted transition-colors hover:text-neutral-100"
-              >
-                Remove
-              </button>
-            </li>
+              id={t.track_id}
+              index={i}
+              title={sanitizeText(t.track?.title ?? "Unknown track")}
+              subtitle={sanitizeText(t.track?.artist_name ?? "Unknown artist")}
+              duration={formatDuration(t.track?.duration_ms)}
+              queueIds={queueIds}
+              liked
+              onToggleLike={handleUnlike}
+              cover_path={t.track?.cover_path ?? null}
+            />
           ))}
         </ol>
       )}

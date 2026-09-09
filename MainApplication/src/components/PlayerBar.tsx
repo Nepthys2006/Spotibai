@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { usePlayerStore } from "../store/playerStore.ts";
+import { useTrackRow } from "../hooks/useCatalog.ts";
+import { useCoverUrl } from "../lib/coverArt.ts";
 import { Icon } from "./icons.tsx";
 
 function formatMs(ms: number): string {
@@ -17,6 +21,8 @@ const btn44 =
  * No <audio>, no autoplay, no signed URLs.
  * All controls call the existing Zustand interface; the engine
  * keeps these signatures and drives progress/duration for real.
+ * Renders nothing while idle (no track or queue loaded); the full
+ * bar mounts once a queue starts, paused or playing.
  */
 export function PlayerBar() {
   const {
@@ -43,35 +49,63 @@ export function PlayerBar() {
   } = usePlayerStore();
 
   const hasQueue = queue.length > 0;
+  const isIdle = !hasQueue && !currentId;
   const pos = currentId ? queue.indexOf(currentId) : -1;
   const shortId = currentId ? currentId.slice(0, 8) : null;
   const seekMax = durationMs > 0 ? durationMs : 100;
   const seekValue = durationMs > 0 ? Math.min(progressMs, durationMs) : 0;
+  const currentTrackQuery = useTrackRow(currentId ?? undefined);
+  const signedCover = useCoverUrl(currentTrackQuery.data?.cover_path ?? null);
+  const [imgFailed, setImgFailed] = useState(false);
+  useEffect(() => {
+    setImgFailed(false);
+  }, [signedCover]);
+  const showCover = Boolean(signedCover) && !imgFailed;
+
+  // Idle: nothing loaded, so there is nothing to pause, seek, or queue.
+  // Stay unmounted so the bottom stack (and its content offset) is just
+  // the mobile nav; keep surfacing an error if one is somehow present.
+  if (isIdle && !playerError) return null;
 
   return (
     <footer
       aria-label="Player"
-      className="relative z-40 border-t border-line bg-surface px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 sm:px-5"
+      className="relative z-40 border-t border-line bg-surface px-3 pb-2 pt-2 sm:px-5"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Top row: track + primary actions (mobile) / left zone (desktop) */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <div
-            aria-hidden="true"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-elevated text-muted"
+          <Link
+            to="/now-playing"
+            aria-label="Open now playing"
+            className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-lg"
           >
-            <Icon name="music" size={22} />
-          </div>
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="truncate text-sm font-medium text-neutral-100">
-              {currentId ? `Track ${shortId}` : "Nothing playing yet"}
-            </p>
-            <p className="truncate text-xs text-muted">
-              {currentId
-                ? `${pos + 1} of ${queue.length} · ${isPlaying ? "Playing preview" : "Paused"} · sound lands with engine`
-                : "Pick a track once a queue is loaded"}
-            </p>
-          </div>
+            <div
+              aria-hidden="true"
+              className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-md bg-elevated text-muted"
+            >
+              {showCover ? (
+                <img
+                  src={signedCover ?? ""}
+                  alt=""
+                  onError={() => setImgFailed(true)}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <Icon name="music" size={22} />
+              )}
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <p className="truncate text-sm font-medium text-neutral-100">
+                {currentId ? `Track ${shortId}` : "Nothing playing yet"}
+              </p>
+              <p className="truncate text-xs text-muted">
+                {currentId
+                  ? `${pos + 1} of ${queue.length} · ${isPlaying ? "Playing preview" : "Paused"} · sound lands with engine`
+                  : "Pick a track once a queue is loaded"}
+              </p>
+            </div>
+          </Link>
           <button
             type="button"
             aria-label="Like current track"
@@ -89,16 +123,6 @@ export function PlayerBar() {
             className={`${btn44} md:hidden ${queueOpen ? "text-accent" : ""}`}
           >
             <Icon name="queue" size={20} />
-          </button>
-          <button
-            type="button"
-            onClick={togglePlay}
-            disabled={!hasQueue}
-            aria-label={isPlaying ? "Pause" : "Play"}
-            title={hasQueue ? (isPlaying ? "Pause" : "Play") : "Load a queue to play"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Icon name={isPlaying ? "pause" : "play"} size={20} />
           </button>
         </div>
 
@@ -131,7 +155,7 @@ export function PlayerBar() {
               disabled={!hasQueue}
               aria-label={isPlaying ? "Pause" : "Play"}
               title={isPlaying ? "Pause" : "Play"}
-              className="hidden h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Icon name={isPlaying ? "pause" : "play"} size={20} />
             </button>

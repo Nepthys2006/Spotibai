@@ -16,6 +16,7 @@ export interface Playlist {
   owner_id: string;
   name: string;
   is_public: boolean;
+  cover_path: string | null;
 }
 
 export interface PlaylistEntry {
@@ -33,7 +34,7 @@ export function usePlaylists() {
     queryFn: async (): Promise<Playlist[]> => {
       const { data, error } = await supabase
         .from("playlists")
-        .select("id,owner_id,name,is_public")
+        .select("id,owner_id,name,is_public,cover_path")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Playlist[];
@@ -52,7 +53,7 @@ export function usePlaylist(playlistId: string | undefined) {
     queryFn: async (): Promise<Playlist | null> => {
       const { data, error } = await supabase
         .from("playlists")
-        .select("id,owner_id,name,is_public")
+        .select("id,owner_id,name,is_public,cover_path")
         .eq("id", playlistId!)
         .maybeSingle();
       if (error) throw error;
@@ -76,6 +77,8 @@ interface RawEntry {
     duration_ms: number | null;
     storage_path: string;
     cover_path: string | null;
+    lyrics_lrc: string | null;
+    lyrics_updated_at: string | null;
     artists: { name: string } | { name: string }[] | null;
     albums: { title: string } | { title: string }[] | null;
   } | { id: string }[] | null;
@@ -98,6 +101,8 @@ function toEntry(row: RawEntry): PlaylistEntry {
           duration_ms: t.duration_ms,
           storage_path: t.storage_path,
           cover_path: t.cover_path,
+          lyrics_lrc: t.lyrics_lrc,
+          lyrics_updated_at: t.lyrics_updated_at,
           artist_name: artistRel
             ? Array.isArray(artistRel)
               ? (artistRel[0]?.name ?? null)
@@ -122,7 +127,7 @@ export function usePlaylistEntries(playlistId: string | undefined) {
       const { data, error } = await supabase
         .from("playlist_tracks")
         .select(
-          "playlist_id,track_id,position,tracks(id,title,artist_id,album_id,duration_ms,storage_path,cover_path,artists(name),albums(title))",
+          "playlist_id,track_id,position,tracks(id,title,artist_id,album_id,duration_ms,storage_path,cover_path,lyrics_lrc,lyrics_updated_at,artists(name),albums(title))",
         )
         .eq("playlist_id", playlistId!)
         .order("position", { ascending: true });
@@ -164,6 +169,7 @@ export interface PublicPlaylistHit {
   name: string;
   is_public: boolean;
   owner_id: string;
+  cover_path: string | null;
 }
 
 /** Public playlists matching a name (for search). */
@@ -176,7 +182,7 @@ export function usePlaylistSearch(term: string) {
       const escaped = term.trim().replace(/([%_\\])/g, "\\$1");
       const { data, error } = await supabase
         .from("playlists")
-        .select("id,name,is_public,owner_id")
+        .select("id,name,is_public,owner_id,cover_path")
         .ilike("name", `%${escaped}%`)
         .order("name", { ascending: true })
         .limit(20);
@@ -204,7 +210,7 @@ export function useCreatePlaylist() {
       const { data, error } = await supabase
         .from("playlists")
         .insert({ owner_id: ownerId, name: form.name, is_public: form.isPublic })
-        .select("id,owner_id,name,is_public")
+        .select("id,owner_id,name,is_public,cover_path")
         .single();
       if (error) throw error;
       return data as Playlist;
@@ -268,6 +274,117 @@ export function useSetPlaylistVisibility(playlistId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["playlist", playlistId] });
       queryClient.invalidateQueries({ queryKey: ["playlists"] });
+    },
+  });
+}
+
+const PLAYLIST_COVER_MAX_BYTES = 5 * 1024 * 1024;
+
+const PLAYLIST_IMAGE_EXT_BY_MIME: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+};
+
+/** Sniff magic bytes; independent of extension/MIME (mirrors useAdmin cover checks). */
+async function sniffPlaylistCoverKind(file: File): Promise<"image" | null> {
+  const buf = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  const ascii = (offset: number, len: number): string => {
+    let s = "";
+    for (let i = offset; i < offset + len && i < buf.length; i++) {
+      s += String.fromCharCode(buf[i] as number);
+    }
+    return s;
+  };
+  if (ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP") return "image";
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) {
+    return "image"; // JPEG
+  }
+  if (buf.length >= 4 && buf[0] === 0x89 && ascii(1, 3) === "PNG") {
+    return "image";
+  }
+  if (ascii(0, 4) === "GIF8") return "image";
+  if (buf.length >= 2 && buf[0] === 0x42 && buf[1] === 0x4d) return "image"; // BMP
+  return null;
+}
+
+async function validatePlaylistCoverFile(file: File): Promise<string> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Cover must be an image/* upload.");
+  }
+  if (file.size <= 0 || file.size > PLAYLIST_COVER_MAX_BYTES) {
+    throw new Error("Cover image must be non-empty and at most 5 MB.");
+  }
+  if ((await sniffPlaylistCoverKind(file)) !== "image") {
+    throw new Error("Cover image signature not recognized.");
+  }
+  return PLAYLIST_IMAGE_EXT_BY_MIME[file.type] ?? "jpg";
+}
+
+function randomPlaylistCoverPath(ext: string): string {
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.floor(Math.random() * 1e9)}`;
+  return `playlist-${id}.${ext}`;
+}
+
+export interface SetPlaylistCoverInput {
+  playlistId: string;
+  file: File;
+}
+
+/**
+ * Upload a playlist cover to the private `covers` bucket (stored as
+ * `playlist-<uuid>.<ext>`) and point `playlists.cover_path` at it.
+ * RLS on playlists (owner|admin write) enforces permission; the covers
+ * bucket policy already permits these objects. On success the playlists /
+ * playlist / search-playlists queries are invalidated so `useCoverUrl`
+ * consumers resolve the new path.
+ *
+ * Usage: `const setCover = useSetPlaylistCover();`
+ * `await setCover.mutateAsync({ playlistId, file });`
+ */
+export function useSetPlaylistCover() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      playlistId,
+      file,
+    }: SetPlaylistCoverInput): Promise<void> => {
+      const ext = await validatePlaylistCoverFile(file);
+      const nextPath = randomPlaylistCoverPath(ext);
+      const { data: current, error: readError } = await supabase
+        .from("playlists")
+        .select("cover_path")
+        .eq("id", playlistId)
+        .maybeSingle();
+      if (readError) throw readError;
+      const prevPath =
+        (current as { cover_path: string | null } | null)?.cover_path ?? null;
+      const { error: uploadError } = await supabase.storage
+        .from("covers")
+        .upload(nextPath, file, { contentType: file.type, upsert: false });
+      if (uploadError) throw uploadError;
+      const { error: updateError } = await supabase
+        .from("playlists")
+        .update({ cover_path: nextPath })
+        .eq("id", playlistId);
+      if (updateError) {
+        await supabase.storage.from("covers").remove([nextPath]);
+        throw updateError;
+      }
+      if (prevPath && prevPath !== nextPath) {
+        await supabase.storage.from("covers").remove([prevPath]);
+      }
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["playlists"] });
+      queryClient.invalidateQueries({
+        queryKey: ["playlist", vars.playlistId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["search-playlists"] });
     },
   });
 }
