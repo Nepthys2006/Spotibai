@@ -1,0 +1,125 @@
+# ── Secrets / env — NEVER commit real values ──
+.env
+.env.*
+!.env.example
+*.env
+!.env.example
+
+# ── Supabase / OpenCode auth — contains OAuth tokens ──
+.opencode/supabase-auth.json
+.opencode/*.local
+.opencode/auth*.json
+.supabase/
+supabase/.branches/
+supabase/.temp/
+supabase/config.toml.bak
+
+# ── Keys / certs / service accounts ──
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*service_account*.json
+*service-account*.json
+secrets/
+.secrets/
+
+# ── Dependencies ──
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+bower_components/
+
+# ── Build / dist (Vite + React + Node/Express) ──
+dist/
+build/
+out/
+.next/
+.nuxt/
+.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+*.tgz
+
+# ── Logs / debug / coverage ──
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+coverage/
+.nyc_output/
+.jest-cache/
+
+# ── OS ──
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ── IDE / editors ──
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
+
+# ── Docker / local infra (keep compose file, ignore overrides + data) ──
+docker-compose.override.yml
+docker-compose.override.yaml
+postgres-data/
+pgdata/
+redis-data/
+minio-data/
+s3-data/
+
+# ── Uploads / media (never commit user audio/covers) ──
+uploads/
+*.mp3
+*.wav
+*.flac
+*.ogg
+*.m4a
+!**/test-fixtures/**/*.mp3
+!**/test-fixtures/**/*.wav
+
+# ── Prisma ──
+prisma/migrations/migration_lock.toml
+# keep schema + migrations, ignore generated client + local db
+# (uncomment if you use Prisma later)
+# node_modules/.prisma/
+# prisma/*.db
+# prisma/*.db-journal
+
+# ── Redis / misc local ──
+dump.rdb
+appendonlydir/
+
+# ── Deepwork local state (git-local per workflow) ──
+.slim/deepwork/
+
+# ── Temp / cache ──
+.tmp/
+.temp/
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
