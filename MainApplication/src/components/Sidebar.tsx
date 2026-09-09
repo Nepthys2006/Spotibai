@@ -50,7 +50,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Mobile"
-      className="fixed inset-x-0 bottom-[76px] z-30 border-t border-line bg-surface/95 px-2 py-1 backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-[158px] z-30 border-t border-line bg-surface px-2 py-1 md:hidden"
     >
       <ul className="grid grid-cols-5 gap-1">
         {links.map((l) => (
@@ -59,7 +59,7 @@ export function MobileNav() {
               to={l.to}
               end={l.end}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-[11px] font-medium ${
+                `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[11px] font-medium ${
                   isActive ? "text-accent" : "text-muted"
                 }`
               }

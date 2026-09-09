@@ -1,25 +1,52 @@
+import { Suspense, lazy, useEffect } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell.tsx";
 import { AuthProvider } from "./lib/AuthProvider.tsx";
 import { RequireAdmin } from "./lib/RequireAdmin.tsx";
+import { initPredictivePreload } from "./lib/preload.ts";
 import { queryClient } from "./lib/queryClient.ts";
-import { Admin } from "./pages/Admin.tsx";
 import { Home } from "./pages/Home.tsx";
-import { Library } from "./pages/Library.tsx";
-import { LikedSongs } from "./pages/LikedSongs.tsx";
 import { NotFound } from "./pages/NotFound.tsx";
-import { PlaylistDetail } from "./pages/PlaylistDetail.tsx";
-import { Search } from "./pages/Search.tsx";
-import { Login } from "./pages/auth/Login.tsx";
-import { ResetPassword } from "./pages/auth/ResetPassword.tsx";
-import { Signup } from "./pages/auth/Signup.tsx";
+
+const Search = lazy(() =>
+  import("./pages/Search.tsx").then((m) => ({ default: m.Search })),
+);
+const Library = lazy(() =>
+  import("./pages/Library.tsx").then((m) => ({ default: m.Library })),
+);
+const PlaylistDetail = lazy(() =>
+  import("./pages/PlaylistDetail.tsx").then((m) => ({
+    default: m.PlaylistDetail,
+  })),
+);
+const LikedSongs = lazy(() =>
+  import("./pages/LikedSongs.tsx").then((m) => ({ default: m.LikedSongs })),
+);
+const Admin = lazy(() =>
+  import("./pages/Admin.tsx").then((m) => ({ default: m.Admin })),
+);
+const Signup = lazy(() =>
+  import("./pages/auth/Signup.tsx").then((m) => ({ default: m.Signup })),
+);
+const Login = lazy(() =>
+  import("./pages/auth/Login.tsx").then((m) => ({ default: m.Login })),
+);
+const ResetPassword = lazy(() =>
+  import("./pages/auth/ResetPassword.tsx").then((m) => ({
+    default: m.ResetPassword,
+  })),
+);
 
 export default function App() {
+  useEffect(() => {
+    initPredictivePreload();
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
       <BrowserRouter>
+        <Suspense fallback={null}>
         <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Home />} />
@@ -41,6 +68,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
+        </Suspense>
       </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

@@ -1,78 +1,143 @@
 import { usePlayerStore } from "../store/playerStore.ts";
 
+function formatMs(ms: number): string {
+  if (!ms || ms <= 0) return "0:00";
+  const total = Math.floor(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+const btn44 =
+  "flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100";
+
 /**
- * Persistent player bar — visual placeholder only (Phase 2).
- * No <audio>, no autoplay. Phase 4 wires the engine behind the store.
+ * Persistent player bar — feel only (Phase 4).
+ * No <audio>, no autoplay, no signed URLs.
+ * All controls call the existing Zustand interface; the engine
+ * keeps these signatures and drives progress/duration for real.
  */
 export function PlayerBar() {
-  const { isPlaying, togglePlay, volume, setVolume, shuffle, toggleShuffle, repeat, cycleRepeat } =
-    usePlayerStore();
+  const {
+    queue,
+    currentId,
+    isPlaying,
+    togglePlay,
+    volume,
+    setVolume,
+    shuffle,
+    toggleShuffle,
+    repeat,
+    cycleRepeat,
+    next,
+    prev,
+    queueOpen,
+    toggleQueueOpen,
+    progressMs,
+    durationMs,
+    setProgressMs,
+  } = usePlayerStore();
+
+  const hasQueue = queue.length > 0;
+  const pos = currentId ? queue.indexOf(currentId) : -1;
+  const shortId = currentId ? currentId.slice(0, 8) : null;
+  const seekMax = durationMs > 0 ? durationMs : 100;
+  const seekValue = durationMs > 0 ? Math.min(progressMs, durationMs) : 0;
 
   return (
     <footer
       aria-label="Player"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-3 py-2 sm:px-5"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-3 pb-2 pt-2 sm:px-5"
     >
-      <div className="mx-auto flex max-w-6xl items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="mx-auto flex max-w-6xl flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
+        {/* Top row: track + primary actions (mobile) / left zone (desktop) */}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <div
             aria-hidden="true"
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-elevated text-sm font-bold text-muted"
           >
             ♪
           </div>
-          <div className="min-w-0 leading-tight">
+          <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-sm font-medium text-neutral-100">
-              Nothing playing yet
+              {currentId ? `Track ${shortId}` : "Nothing playing yet"}
             </p>
             <p className="truncate text-xs text-muted">
-              Pick a track once catalog wiring lands
+              {currentId
+                ? `${pos + 1} of ${queue.length} · ${isPlaying ? "Playing preview" : "Paused"} · sound lands with engine`
+                : "Pick a track once a queue is loaded"}
             </p>
           </div>
           <button
             type="button"
             aria-label="Like current track"
-            title="Like (wires in Phase 3)"
-            className="ml-1 rounded-full p-2 text-muted hover:text-neutral-100"
+            title="Like (wires with catalog)"
+            className={`${btn44} hidden sm:flex`}
           >
             ♡
           </button>
+          <button
+            type="button"
+            onClick={toggleQueueOpen}
+            aria-label={queueOpen ? "Close queue" : "Open queue"}
+            aria-expanded={queueOpen}
+            title="Queue"
+            className={`${btn44} md:hidden ${queueOpen ? "text-accent" : ""}`}
+          >
+            ☰
+          </button>
+          <button
+            type="button"
+            onClick={togglePlay}
+            disabled={!hasQueue}
+            aria-label={isPlaying ? "Pause" : "Play"}
+            title={hasQueue ? (isPlaying ? "Pause" : "Play") : "Load a queue to play"}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-base text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {isPlaying ? "❚❚" : "▶"}
+          </button>
         </div>
 
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center gap-1 sm:gap-2">
+        {/* Transport + seek: stacked on mobile, stacked centered on desktop */}
+        <div className="flex flex-col items-stretch gap-0.5 md:items-center md:gap-1">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1">
             <button
               type="button"
               onClick={toggleShuffle}
               aria-label="Shuffle"
               aria-pressed={shuffle}
               title="Shuffle"
-              className={`rounded-full p-2 text-sm ${shuffle ? "text-accent" : "text-muted hover:text-neutral-100"}`}
+              className={`${btn44} text-sm ${shuffle ? "text-accent" : ""}`}
             >
               ⇄
             </button>
             <button
               type="button"
+              onClick={prev}
+              disabled={!hasQueue}
               aria-label="Previous track"
-              title="Previous (wires in Phase 4)"
-              className="rounded-full p-2 text-muted hover:text-neutral-100"
+              title={hasQueue ? "Previous" : "Load a queue first"}
+              className={`${btn44} disabled:cursor-not-allowed disabled:opacity-40`}
             >
               ⏮
             </button>
             <button
               type="button"
               onClick={togglePlay}
+              disabled={!hasQueue}
               aria-label={isPlaying ? "Pause" : "Play"}
               title={isPlaying ? "Pause" : "Play"}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-100 text-base text-black hover:bg-accent"
+              className="hidden h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-base text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 md:flex"
             >
               {isPlaying ? "❚❚" : "▶"}
             </button>
             <button
               type="button"
+              onClick={next}
+              disabled={!hasQueue}
               aria-label="Next track"
-              title="Next (wires in Phase 4)"
-              className="rounded-full p-2 text-muted hover:text-neutral-100"
+              title={hasQueue ? "Next" : "Load a queue first"}
+              className={`${btn44} disabled:cursor-not-allowed disabled:opacity-40`}
             >
               ⏭
             </button>
@@ -82,34 +147,53 @@ export function PlayerBar() {
               aria-label={`Repeat: ${repeat}`}
               aria-pressed={repeat !== "off"}
               title={`Repeat: ${repeat}`}
-              className={`rounded-full p-2 text-sm ${repeat !== "off" ? "text-accent" : "text-muted hover:text-neutral-100"}`}
+              className={`${btn44} relative text-sm ${repeat !== "off" ? "text-accent" : ""}`}
             >
               ↻
+              {repeat === "one" ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute bottom-1 right-1.5 text-[9px] font-bold leading-none"
+                >
+                  1
+                </span>
+              ) : null}
             </button>
           </div>
-          <div className="hidden items-center gap-2 sm:flex">
-            <span className="text-[11px] tabular-nums text-muted">0:00</span>
+          {/* Seek: full-width on mobile, fixed on desktop */}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="w-9 shrink-0 text-right text-[11px] tabular-nums text-muted">
+              {formatMs(seekValue)}
+            </span>
             <label htmlFor="player-seek" className="sr-only">
-              Seek
+              Seek (preview only, engine wires playback)
             </label>
             <input
               id="player-seek"
               type="range"
               min={0}
-              max={100}
-              defaultValue={0}
-              className="w-48 lg:w-72"
+              max={seekMax}
+              step={1000}
+              value={seekValue}
+              disabled={!hasQueue}
+              onChange={(e) => setProgressMs(Number(e.target.value))}
+              className="h-11 w-full min-w-0 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 md:w-48 lg:w-72"
             />
-            <span className="text-[11px] tabular-nums text-muted">0:00</span>
+            <span className="w-9 shrink-0 text-[11px] tabular-nums text-muted">
+              {formatMs(durationMs)}
+            </span>
           </div>
         </div>
 
+        {/* Right zone: queue + volume (desktop) */}
         <div className="hidden min-w-0 flex-1 items-center justify-end gap-1 md:flex">
           <button
             type="button"
-            aria-label="Queue"
-            title="Queue (wires in Phase 4)"
-            className="rounded-full p-2 text-muted hover:text-neutral-100"
+            onClick={toggleQueueOpen}
+            aria-label={queueOpen ? "Close queue" : "Open queue"}
+            aria-expanded={queueOpen}
+            title="Queue"
+            className={`${btn44} ${queueOpen ? "text-accent" : ""}`}
           >
             ☰
           </button>
@@ -123,7 +207,7 @@ export function PlayerBar() {
             max={100}
             value={Math.round(volume * 100)}
             onChange={(e) => setVolume(Number(e.target.value) / 100)}
-            className="w-24"
+            className="h-11 w-24 cursor-pointer"
           />
         </div>
       </div>
