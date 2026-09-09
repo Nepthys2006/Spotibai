@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
+import { Icon, type IconName } from "./icons.tsx";
 
-const links = [
-  { to: "/", label: "Home", end: true, icon: "⌂" },
-  { to: "/search", label: "Search", end: false, icon: "⌕" },
-  { to: "/library", label: "Library", end: false, icon: "▤" },
-  { to: "/liked", label: "Liked Songs", end: false, icon: "♥" },
-  { to: "/admin", label: "Admin", end: false, icon: "⚙" },
+const links: { to: string; label: string; end: boolean; icon: IconName }[] = [
+  { to: "/", label: "Home", end: true, icon: "home" },
+  { to: "/search", label: "Search", end: false, icon: "search" },
+  { to: "/library", label: "Library", end: false, icon: "library" },
+  { to: "/liked", label: "Liked Songs", end: false, icon: "heart" },
+  { to: "/admin", label: "Admin", end: false, icon: "settings" },
 ];
 
 export function Sidebar() {
@@ -31,8 +32,8 @@ export function Sidebar() {
               }`
             }
           >
-            <span aria-hidden="true" className="w-5 text-center">
-              {l.icon}
+            <span aria-hidden="true" className="flex w-5 justify-center">
+              <Icon name={l.icon} size={20} />
             </span>
             {l.label}
           </NavLink>
@@ -59,15 +60,15 @@ export function MobileNav() {
               to={l.to}
               end={l.end}
               className={({ isActive }) =>
-                `flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[11px] font-medium ${
+                `flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-center text-[11px] font-medium leading-tight ${
                   isActive ? "text-accent" : "text-muted"
                 }`
               }
             >
-              <span aria-hidden="true" className="text-base leading-none">
-                {l.icon}
+              <span aria-hidden="true" className="flex justify-center leading-none">
+                <Icon name={l.icon} size={20} />
               </span>
-              {l.label}
+              <span className="block w-full break-words">{l.label}</span>
             </NavLink>
           </li>
         ))}

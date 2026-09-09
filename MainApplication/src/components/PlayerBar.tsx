@@ -1,4 +1,5 @@
 import { usePlayerStore } from "../store/playerStore.ts";
+import { Icon } from "./icons.tsx";
 
 function formatMs(ms: number): string {
   if (!ms || ms <= 0) return "0:00";
@@ -9,7 +10,7 @@ function formatMs(ms: number): string {
 }
 
 const btn44 =
-  "flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100";
+  "flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100";
 
 /**
  * Persistent player bar — feel only (Phase 4).
@@ -50,16 +51,16 @@ export function PlayerBar() {
   return (
     <footer
       aria-label="Player"
-      className="relative z-40 border-t border-line bg-surface px-3 pb-2 pt-2 sm:px-5"
+      className="relative z-40 border-t border-line bg-surface px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 sm:px-5"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Top row: track + primary actions (mobile) / left zone (desktop) */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <div
             aria-hidden="true"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-elevated text-sm font-bold text-muted"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-elevated text-muted"
           >
-            ♪
+            <Icon name="music" size={22} />
           </div>
           <div className="min-w-0 flex-1 leading-tight">
             <p className="truncate text-sm font-medium text-neutral-100">
@@ -77,7 +78,7 @@ export function PlayerBar() {
             title="Like (wires with catalog)"
             className={`${btn44} hidden sm:flex`}
           >
-            ♡
+            <Icon name="heart" size={18} />
           </button>
           <button
             type="button"
@@ -87,7 +88,7 @@ export function PlayerBar() {
             title="Queue"
             className={`${btn44} md:hidden ${queueOpen ? "text-accent" : ""}`}
           >
-            ☰
+            <Icon name="queue" size={20} />
           </button>
           <button
             type="button"
@@ -95,9 +96,9 @@ export function PlayerBar() {
             disabled={!hasQueue}
             aria-label={isPlaying ? "Pause" : "Play"}
             title={hasQueue ? (isPlaying ? "Pause" : "Play") : "Load a queue to play"}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-base text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {isPlaying ? "❚❚" : "▶"}
+            <Icon name={isPlaying ? "pause" : "play"} size={20} />
           </button>
         </div>
 
@@ -110,9 +111,9 @@ export function PlayerBar() {
               aria-label="Shuffle"
               aria-pressed={shuffle}
               title="Shuffle"
-              className={`${btn44} text-sm ${shuffle ? "text-accent" : ""}`}
+              className={`${btn44} ${shuffle ? "text-accent" : ""}`}
             >
-              ⇄
+              <Icon name="shuffle" size={18} />
             </button>
             <button
               type="button"
@@ -122,7 +123,7 @@ export function PlayerBar() {
               title={hasQueue ? "Previous" : "Load a queue first"}
               className={`${btn44} disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              ⏮
+              <Icon name="skipBack" size={20} />
             </button>
             <button
               type="button"
@@ -130,9 +131,9 @@ export function PlayerBar() {
               disabled={!hasQueue}
               aria-label={isPlaying ? "Pause" : "Play"}
               title={isPlaying ? "Pause" : "Play"}
-              className="hidden h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-base text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 md:flex"
+              className="hidden h-11 w-11 items-center justify-center rounded-full bg-neutral-100 text-black transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 md:flex"
             >
-              {isPlaying ? "❚❚" : "▶"}
+              <Icon name={isPlaying ? "pause" : "play"} size={20} />
             </button>
             <button
               type="button"
@@ -142,7 +143,7 @@ export function PlayerBar() {
               title={hasQueue ? "Next" : "Load a queue first"}
               className={`${btn44} disabled:cursor-not-allowed disabled:opacity-40`}
             >
-              ⏭
+              <Icon name="skipForward" size={20} />
             </button>
             <button
               type="button"
@@ -150,9 +151,9 @@ export function PlayerBar() {
               aria-label={`Repeat: ${repeat}`}
               aria-pressed={repeat !== "off"}
               title={`Repeat: ${repeat}`}
-              className={`${btn44} relative text-sm ${repeat !== "off" ? "text-accent" : ""}`}
+              className={`${btn44} relative ${repeat !== "off" ? "text-accent" : ""}`}
             >
-              ↻
+              <Icon name="repeat" size={18} />
               {repeat === "one" ? (
                 <span
                   aria-hidden="true"
@@ -198,7 +199,7 @@ export function PlayerBar() {
             title="Queue"
             className={`${btn44} ${queueOpen ? "text-accent" : ""}`}
           >
-            ☰
+            <Icon name="queue" size={20} />
           </button>
           <label htmlFor="player-volume" className="sr-only">
             Volume
@@ -225,7 +226,7 @@ export function PlayerBar() {
               if (currentId) jumpTo(currentId);
             }}
             disabled={!currentId}
-            className="rounded-full px-4 py-2 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Retry
           </button>
@@ -233,9 +234,9 @@ export function PlayerBar() {
             type="button"
             onClick={clearPlayerError}
             aria-label="Dismiss player error"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
       ) : null}

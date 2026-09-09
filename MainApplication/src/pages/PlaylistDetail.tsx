@@ -7,6 +7,7 @@ import {
   Field,
   TextInput,
 } from "../components/ui.tsx";
+import { Icon } from "../components/icons.tsx";
 import { formatDuration, useTracks } from "../hooks/useCatalog.ts";
 import { useLikedTrackIds, useToggleLike } from "../hooks/useLikes.ts";
 import {
@@ -58,9 +59,9 @@ export function PlaylistDetail() {
         <div className="flex items-end gap-4">
           <div
             aria-hidden="true"
-            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-elevated text-3xl font-bold text-muted sm:h-36 sm:w-36"
+            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-elevated text-muted sm:h-36 sm:w-36"
           >
-            ♪
+            <Icon name="music" size={36} />
           </div>
           <div className="min-w-0">
             <p className="text-xs text-muted">Playlist</p>
@@ -77,7 +78,7 @@ export function PlaylistDetail() {
           title="This playlist is empty"
           body="Add tracks from search or your library. They will appear here in order with play, like, and remove actions."
           action={
-            <span className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black">
+            <span className="inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black sm:w-auto">
               Find songs to add
             </span>
           }
@@ -178,9 +179,9 @@ export function PlaylistDetail() {
       <div className="flex items-end gap-4">
         <div
           aria-hidden="true"
-          className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-elevated text-3xl font-bold text-muted sm:h-36 sm:w-36"
+          className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-elevated text-muted sm:h-36 sm:w-36"
         >
-          ♪
+          <Icon name="music" size={36} />
         </div>
         <div className="min-w-0">
           <p className="text-xs text-muted">Playlist</p>
@@ -206,7 +207,7 @@ export function PlaylistDetail() {
           title="This playlist is empty"
           body="Add tracks from search or your library. They will appear here in order with play, like, and remove actions."
           action={
-            <span className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black">
+            <span className="inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black sm:w-auto">
               Find songs to add
             </span>
           }
@@ -218,13 +219,13 @@ export function PlaylistDetail() {
             return (
               <li
                 key={entry.track_id}
-                className="flex items-center gap-3 border-b border-line bg-card px-3 py-2.5 last:border-0 hover:bg-elevated"
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-card px-3 py-2 last:border-0 hover:bg-elevated"
               >
-                <span className="w-6 text-right text-xs tabular-nums text-muted">
+                <span className="w-6 shrink-0 text-right text-xs tabular-nums text-muted">
                   {i + 1}
                 </span>
                 <CoverThumb label={entry.track?.title ?? "?"} />
-                <div className="min-w-0 flex-1 leading-tight">
+                <div className="min-w-0 flex-1 basis-36 leading-tight">
                   <p className="truncate text-sm font-medium text-neutral-100">
                     {sanitizeText(entry.track?.title ?? "Unknown track")}
                   </p>
@@ -233,48 +234,50 @@ export function PlaylistDetail() {
                     · {sanitizeText(entry.track?.album_title ?? "Single")}
                   </p>
                 </div>
-                <span className="text-xs tabular-nums text-muted">
+                <span className="shrink-0 text-xs tabular-nums text-muted">
                   {formatDuration(entry.track?.duration_ms)}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleToggleLike(entry.track_id)}
-                  aria-label={liked ? "Unlike" : "Like"}
-                  aria-pressed={liked}
-                  className="text-sm text-muted hover:text-neutral-100"
-                >
-                  ♥
-                </button>
-                {isOwner ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => handleMove(entry.track_id, -1)}
-                      disabled={i === 0}
-                      aria-label="Move up"
-                      className="text-xs text-muted hover:text-neutral-100 disabled:opacity-50"
-                    >
-                      ↑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleMove(entry.track_id, 1)}
-                      disabled={i === entries.length - 1}
-                      aria-label="Move down"
-                      className="text-xs text-muted hover:text-neutral-100 disabled:opacity-50"
-                    >
-                      ↓
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemove(entry.track_id)}
-                      aria-label="Remove"
-                      className="text-xs text-muted hover:text-neutral-100"
-                    >
-                      Remove
-                    </button>
-                  </>
-                ) : null}
+                <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleLike(entry.track_id)}
+                    aria-label={liked ? "Unlike" : "Like"}
+                    aria-pressed={liked}
+                    className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
+                  >
+                    <Icon name="heart" size={16} filled={liked} />
+                  </button>
+                  {isOwner ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleMove(entry.track_id, -1)}
+                        disabled={i === 0}
+                        aria-label="Move up"
+                        className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100 disabled:opacity-50"
+                      >
+                        <Icon name="chevronUp" size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleMove(entry.track_id, 1)}
+                        disabled={i === entries.length - 1}
+                        aria-label="Move down"
+                        className="flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100 disabled:opacity-50"
+                      >
+                        <Icon name="chevronDown" size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(entry.track_id)}
+                        aria-label="Remove"
+                        className="flex min-h-11 items-center justify-center whitespace-nowrap rounded-full px-3 text-xs text-muted transition-colors hover:text-neutral-100"
+                      >
+                        Remove
+                      </button>
+                    </>
+                  ) : null}
+                </div>
               </li>
             );
           })}
@@ -341,19 +344,19 @@ export function PlaylistDetail() {
                   .map((t) => (
                     <li
                       key={t.id}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-card"
+                      className="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-card"
                     >
-                      <span className="truncate text-sm text-neutral-100">
+                      <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
                         {sanitizeText(t.title)}
                       </span>
-                      <span className="truncate text-xs text-muted">
+                      <span className="max-w-[38%] shrink-0 truncate text-xs text-muted">
                         {sanitizeText(t.artist_name ?? "Unknown artist")}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleAdd(t.id)}
                         disabled={addTrack.isPending}
-                        className="ml-auto text-xs text-muted hover:text-neutral-100 disabled:opacity-50"
+                        className="ml-auto inline-flex min-h-11 shrink-0 items-center justify-center rounded-full px-3 text-xs font-medium text-muted transition-colors hover:text-neutral-100 disabled:opacity-50"
                       >
                         Add
                       </button>

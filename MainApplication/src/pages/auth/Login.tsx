@@ -77,7 +77,7 @@ export function Login() {
             {formError}
           </p>
         ) : null}
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="w-full">
           {pending ? "Logging in…" : "Log in"}
         </Button>
         <p className="text-xs leading-relaxed text-muted">

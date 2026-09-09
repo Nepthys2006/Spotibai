@@ -16,11 +16,11 @@ export function TopBar() {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-base/95 px-4 py-3 backdrop-blur sm:px-6">
+    <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-base/95 px-4 py-3 backdrop-blur sm:gap-3 sm:px-6">
       <form
         role="search"
         aria-label="Catalog search"
-        className="flex w-full max-w-md items-center gap-2"
+        className="flex min-w-0 flex-1 items-center gap-2 sm:max-w-md sm:flex-none sm:basis-80 sm:grow"
         onSubmit={(e) => {
           e.preventDefault();
           const data = new FormData(e.currentTarget);
@@ -37,10 +37,10 @@ export function TopBar() {
           type="search"
           placeholder="Search songs, artists, albums"
           autoComplete="off"
-          className="w-full rounded-full border border-line bg-elevated px-4 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 hover:border-neutral-500"
+          className="min-h-11 w-full min-w-0 rounded-full border border-line bg-elevated px-4 py-2 text-sm text-neutral-100 placeholder:truncate placeholder:text-neutral-500 hover:border-neutral-500"
         />
       </form>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
         {user ? (
           <>
             <span
@@ -52,7 +52,7 @@ export function TopBar() {
             <button
               type="button"
               onClick={handleLogout}
-              className="rounded-full px-4 py-2 text-sm font-medium text-muted hover:text-neutral-100"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted hover:text-neutral-100 sm:px-4"
             >
               Log out
             </button>
@@ -67,13 +67,13 @@ export function TopBar() {
             </span>
             <Link
               to="/login"
-              className="rounded-full px-4 py-2 text-sm font-medium text-muted hover:text-neutral-100"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium text-muted hover:text-neutral-100 sm:px-4"
             >
               Log in
             </Link>
             <Link
               to="/signup"
-              className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-black hover:bg-accent-strong"
+              className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full bg-accent px-3 py-2 text-sm font-semibold text-black hover:bg-accent-strong sm:px-4"
             >
               Sign up
             </Link>

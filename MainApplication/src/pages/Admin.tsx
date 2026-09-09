@@ -20,7 +20,7 @@ import {
 import { sanitizeText, useRole, useSession } from "../hooks/useSession.ts";
 
 const actionBtn =
-  "rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex min-h-11 min-w-11 items-center justify-center whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40";
 
 export function Admin() {
   const { user } = useSession();
@@ -363,7 +363,7 @@ export function Admin() {
                               required
                             />
                           </Field>
-                          <div className="flex gap-2 sm:col-span-2">
+                          <div className="flex flex-wrap gap-2 sm:col-span-2">
                             <Button
                               type="submit"
                               disabled={updateTrack.isPending}
@@ -398,26 +398,28 @@ export function Admin() {
                         {sanitizeText(t.album_title ?? "—")}
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingId(t.id);
-                            setEditErrors({});
-                            setTableError(null);
-                          }}
-                          disabled={!canMutate}
-                          className={actionBtn}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(t)}
-                          disabled={!canMutate || deleteTrack.isPending}
-                          className={actionBtn}
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingId(t.id);
+                              setEditErrors({});
+                              setTableError(null);
+                            }}
+                            disabled={!canMutate}
+                            className={actionBtn}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(t)}
+                            disabled={!canMutate || deleteTrack.isPending}
+                            className={actionBtn}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ),
@@ -472,19 +474,21 @@ export function Admin() {
                         {sanitizeText(u.role ?? "USER")}
                       </td>
                       <td className="px-4 py-2.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleRole(
-                              u.id,
-                              isCallerAdmin ? "USER" : "ADMIN",
-                            )
-                          }
-                          disabled={!canMutate || setUserRole.isPending}
-                          className={actionBtn}
-                        >
-                          {isCallerAdmin ? "Demote" : "Promote"}
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleRole(
+                                u.id,
+                                isCallerAdmin ? "USER" : "ADMIN",
+                              )
+                            }
+                            disabled={!canMutate || setUserRole.isPending}
+                            className={actionBtn}
+                          >
+                            {isCallerAdmin ? "Demote" : "Promote"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

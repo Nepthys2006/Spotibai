@@ -50,16 +50,16 @@ export function Home() {
           title="Your shelves are empty"
           body="Uploaded tracks and followed playlists will appear here. Start by searching the catalog or building your first playlist."
           action={
-            <div className="flex gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <Link
                 to="/search"
-                className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
+                className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
               >
                 Search music
               </Link>
               <Link
                 to="/library"
-                className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-neutral-200 hover:border-neutral-500"
+                className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-line px-5 py-2.5 text-sm font-medium text-neutral-200 hover:border-neutral-500"
               >
                 Open library
               </Link>

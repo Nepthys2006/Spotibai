@@ -1,5 +1,5 @@
 # Spotibai on Netlify — app lives in MainApplication/ (Vite SPA).
-# Dashboard: New site from Git → pick Nepthys2006/Spotibai → settings below
+# Dashboard: New site from Git → pick this repo → settings below
 # are picked up automatically. Then add env vars + deploy (see README).
 
 [build]
@@ -25,6 +25,7 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    # CSP host is public project URL (not a secret), must stay literal for deploy
     Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src https://jsucuohtjkmeljumlruk.supabase.co; connect-src 'self' https://jsucuohtjkmeljumlruk.supabase.co; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 
 # Long-cache hashed build assets (Vite emits fingerprinted filenames).

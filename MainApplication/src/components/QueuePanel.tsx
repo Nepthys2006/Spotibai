@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { usePlayerStore } from "../store/playerStore.ts";
+import { Icon } from "./icons.tsx";
 
 /**
  * Queue sheet — feel only (Phase 4).
@@ -67,9 +68,9 @@ export function QueuePanel() {
             type="button"
             onClick={() => setQueueOpen(false)}
             aria-label="Close queue"
-            className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
           >
-            ✕
+            <Icon name="close" size={18} />
           </button>
         </div>
 
@@ -107,11 +108,15 @@ export function QueuePanel() {
                     </span>
                     <span
                       aria-hidden="true"
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
                         active ? "bg-accent text-black" : "bg-elevated text-muted"
                       }`}
                     >
-                      {active ? (isPlaying ? "❚❚" : "▶") : "♪"}
+                      {active ? (
+                        <Icon name={isPlaying ? "pause" : "play"} size={14} />
+                      ) : (
+                        <Icon name="music" size={16} />
+                      )}
                     </span>
                     <span className="min-w-0 flex-1 leading-tight">
                       <span className="block truncate text-sm font-medium">

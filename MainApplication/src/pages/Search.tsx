@@ -47,7 +47,7 @@ export function Search() {
           placeholder="Try an artist, a song, or a mood"
           autoComplete="off"
           onChange={(e) => setParams(e.target.value ? { q: e.target.value } : {})}
-          className="w-full rounded-full border border-line bg-elevated px-4 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 hover:border-neutral-500"
+          className="min-h-11 w-full rounded-full border border-line bg-elevated px-4 py-2.5 text-sm text-neutral-100 placeholder:text-neutral-500 hover:border-neutral-500"
         />
       </form>
 
@@ -130,10 +130,10 @@ export function Search() {
                   title={sanitizeText(p.name)}
                   subtitle="Playlist"
                   action={
-                    <Link
+                      <Link
                       to={`/playlists/${p.id}`}
                       aria-label={`Open ${sanitizeText(p.name)}`}
-                      className="text-xs text-muted hover:text-neutral-100"
+                      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full px-2 text-xs font-medium text-muted hover:text-neutral-100"
                     >
                       Open
                     </Link>

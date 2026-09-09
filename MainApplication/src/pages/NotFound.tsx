@@ -14,16 +14,16 @@ export function NotFound() {
         The link may be old or mistyped. Head home or search for what you
         wanted to hear.
       </p>
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row">
         <Link
           to="/"
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
+          className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
         >
           Go home
         </Link>
         <Link
           to="/search"
-          className="rounded-full border border-line px-5 py-2.5 text-sm font-medium text-neutral-200 hover:border-neutral-500"
+          className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-full border border-line px-5 py-2.5 text-sm font-medium text-neutral-200 hover:border-neutral-500"
         >
           Search
         </Link>

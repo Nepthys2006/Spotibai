@@ -117,7 +117,7 @@ export function Signup() {
             {notice}
           </p>
         ) : null}
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="w-full">
           {pending ? "Signing up…" : "Sign up"}
         </Button>
         <p className="text-xs leading-relaxed text-muted">

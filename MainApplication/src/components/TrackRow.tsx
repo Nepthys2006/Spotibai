@@ -1,4 +1,5 @@
 import { usePlayerStore } from "../store/playerStore.ts";
+import { Icon } from "./icons.tsx";
 
 /**
  * Shared track row — feel pattern for pages to adopt (Phase 4).
@@ -49,11 +50,15 @@ export function TrackRow({
       >
         <span
           aria-hidden="true"
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-            active ? "bg-accent text-black" : "bg-elevated text-muted"
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+            active ? "bg-accent text-black" : "bg-elevated text-sm font-bold text-muted"
           }`}
         >
-          {active ? (isPlaying ? "❚❚" : "▶") : title.slice(0, 1).toUpperCase()}
+          {active ? (
+            <Icon name={isPlaying ? "pause" : "play"} size={16} />
+          ) : (
+            title.slice(0, 1).toUpperCase()
+          )}
         </span>
         <span className="min-w-0 flex-1 leading-tight">
           <span className="block truncate text-sm font-medium text-neutral-100">
@@ -73,9 +78,9 @@ export function TrackRow({
           onClick={() => onToggleLike(id)}
           aria-label={liked ? "Unlike" : "Like"}
           aria-pressed={Boolean(liked)}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm text-muted transition-colors hover:text-neutral-100"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
         >
-          {liked ? "♥" : "♡"}
+          <Icon name="heart" size={18} filled={liked} />
         </button>
       ) : null}
     </li>

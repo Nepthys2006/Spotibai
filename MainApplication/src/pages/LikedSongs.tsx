@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Icon } from "../components/icons.tsx";
 import { EmptyState } from "../components/ui.tsx";
 import { sanitizeText, useSession } from "../hooks/useSession.ts";
 import { useLikedSongs, useToggleLike } from "../hooks/useLikes.ts";
@@ -18,14 +19,14 @@ export function LikedSongs() {
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-end gap-4">
+      <div className="flex min-w-0 items-end gap-4">
         <div
           aria-hidden="true"
-          className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-accent text-3xl font-bold text-black sm:h-36 sm:w-36"
+          className="flex h-28 w-28 shrink-0 items-center justify-center rounded-2xl bg-accent text-black sm:h-36 sm:w-36"
         >
-          ♥
+          <Icon name="heart" size={36} filled />
         </div>
-        <div>
+        <div className="min-w-0">
           <p className="text-xs text-muted">Playlist</p>
           <h1 className="text-2xl font-bold sm:text-3xl">Liked Songs</h1>
           <p className="mt-1 text-sm text-muted">
@@ -49,7 +50,7 @@ export function LikedSongs() {
           action={
             <Link
               to="/search"
-              className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
+              className="inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong sm:w-auto"
             >
               Find songs to like
             </Link>
@@ -60,19 +61,19 @@ export function LikedSongs() {
           {liked.map((t) => (
             <li
               key={t.track_id}
-              className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-card"
+              className="flex min-w-0 items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-card"
             >
-              <span className="text-sm text-neutral-100">
+              <span className="min-w-0 flex-1 truncate text-sm text-neutral-100">
                 {sanitizeText(t.track?.title ?? "Unknown track")}
               </span>
-              <span className="text-sm text-muted">
+              <span className="max-w-[35%] shrink-0 truncate text-sm text-muted">
                 {sanitizeText(t.track?.artist_name ?? "Unknown artist")}
               </span>
               <button
                 type="button"
                 onClick={() => handleUnlike(t.track_id)}
                 aria-label="Unlike"
-                className="ml-auto text-xs text-muted hover:text-neutral-100"
+                className="ml-auto inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-xs text-muted transition-colors hover:text-neutral-100"
               >
                 Remove
               </button>

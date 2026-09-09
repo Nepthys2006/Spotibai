@@ -101,7 +101,7 @@ export function Library() {
             <button
               type="button"
               onClick={() => setShowForm((v) => !v)}
-              className="rounded-full border border-line px-4 py-2 text-xs font-medium text-neutral-200 hover:border-neutral-500"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-line px-4 py-2 text-xs font-medium text-neutral-200 hover:border-neutral-500"
             >
               New playlist
             </button>
@@ -169,7 +169,7 @@ export function Library() {
               <button
                 type="button"
                 onClick={() => setShowForm(true)}
-                className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
+                className="inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong sm:w-auto"
               >
                 Create playlist
               </button>

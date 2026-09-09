@@ -118,7 +118,7 @@ export function ResetPassword() {
               {formError}
             </p>
           ) : null}
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} className="w-full">
             {pending ? "Saving…" : "Set new password"}
           </Button>
         </form>
@@ -144,7 +144,7 @@ export function ResetPassword() {
               {notice}
             </p>
           ) : null}
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} className="w-full">
             {pending ? "Sending…" : "Send reset link"}
           </Button>
           <p className="text-xs leading-relaxed text-muted">
