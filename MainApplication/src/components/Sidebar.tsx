@@ -50,7 +50,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Mobile"
-      className="fixed inset-x-0 bottom-[158px] z-30 border-t border-line bg-surface px-2 py-1 md:hidden"
+      className="relative z-30 border-t border-line bg-surface px-2 py-1 md:hidden"
     >
       <ul className="grid grid-cols-5 gap-1">
         {links.map((l) => (

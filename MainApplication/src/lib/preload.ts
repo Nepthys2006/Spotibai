@@ -1,3 +1,5 @@
+import { usePlayerStore } from "../store/playerStore.ts";
+import { unloadAudio } from "./audioEngine.ts";
 import { supabase } from "./supabase.ts";
 
 /**
@@ -23,7 +25,11 @@ export function initPredictivePreload(): void {
     if (session?.user) {
       void warmLikelyTracks(session.user.id);
     } else {
+      // Single reliable SIGNED_OUT teardown: warmers, engine source +
+      // signed-URL cache, and queue — covers logout, expiry, remote revoke.
       dropWarmers();
+      unloadAudio();
+      usePlayerStore.getState().clear();
     }
   });
 }

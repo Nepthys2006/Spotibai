@@ -196,8 +196,16 @@ export async function playLoaded(): Promise<void> {
   await el.play();
 }
 
-/** Stop and forget the current source. */
+/** Stop and forget the current source (incl. cached signed URLs). */
 export function unloadAudio(): void {
+  urlCache.clear();
+  try {
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = null;
+    }
+  } catch {
+    /* metadata is best-effort */
+  }
   if (!audio) {
     currentTrackId = null;
     return;

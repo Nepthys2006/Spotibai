@@ -36,6 +36,9 @@ export function PlayerBar() {
     progressMs,
     durationMs,
     setProgressMs,
+    playerError,
+    clearPlayerError,
+    jumpTo,
   } = usePlayerStore();
 
   const hasQueue = queue.length > 0;
@@ -47,7 +50,7 @@ export function PlayerBar() {
   return (
     <footer
       aria-label="Player"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface px-3 pb-2 pt-2 sm:px-5"
+      className="relative z-40 border-t border-line bg-surface px-3 pb-2 pt-2 sm:px-5"
     >
       <div className="mx-auto flex max-w-6xl flex-col gap-1.5 md:flex-row md:items-center md:gap-3">
         {/* Top row: track + primary actions (mobile) / left zone (desktop) */}
@@ -211,6 +214,31 @@ export function PlayerBar() {
           />
         </div>
       </div>
+      {playerError ? (
+        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center gap-2 px-1 pb-1">
+          <p role="alert" className="min-w-0 flex-1 truncate text-xs text-red-300">
+            {playerError}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (currentId) jumpTo(currentId);
+            }}
+            disabled={!currentId}
+            className="rounded-full px-4 py-2 text-xs font-medium text-muted hover:text-neutral-100 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Retry
+          </button>
+          <button
+            type="button"
+            onClick={clearPlayerError}
+            aria-label="Dismiss player error"
+            className="flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors hover:text-neutral-100"
+          >
+            ✕
+          </button>
+        </div>
+      ) : null}
     </footer>
   );
 }

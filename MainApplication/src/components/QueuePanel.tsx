@@ -43,7 +43,7 @@ export function QueuePanel() {
         role="dialog"
         aria-label="Queue"
         aria-modal="false"
-        className="queue-sheet fixed inset-x-3 bottom-56 z-50 flex max-h-[46vh] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl sm:left-auto sm:right-6 sm:w-[380px] md:bottom-24"
+        className="queue-sheet fixed inset-x-3 bottom-[calc(var(--bottom-stack-h,220px)+12px)] z-50 flex max-h-[46vh] flex-col overflow-hidden rounded-2xl border border-line bg-card shadow-2xl sm:left-auto sm:right-6 sm:w-[380px] md:bottom-24"
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
           <div className="min-w-0 flex-1 leading-tight">
