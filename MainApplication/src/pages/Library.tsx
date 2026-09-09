@@ -1,9 +1,62 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Card, EmptyState, SectionHeader } from "../components/ui.tsx";
+import {
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  SectionHeader,
+  TextInput,
+} from "../components/ui.tsx";
+import { sanitizeText, useSession } from "../hooks/useSession.ts";
+import {
+  playlistSchema,
+  useCreatePlaylist,
+  usePlaylists,
+  usePlaylistTrackCounts,
+} from "../hooks/usePlaylists.ts";
 
 export function Library() {
-  const playlists: { id: string; name: string; count: string }[] = [];
+  const { user } = useSession();
+  const playlistsQuery = usePlaylists();
+  const createPlaylist = useCreatePlaylist();
+  const [showForm, setShowForm] = useState(false);
+  const [fieldError, setFieldError] = useState<string | undefined>();
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const playlists =
+    user && !playlistsQuery.isLoading && !playlistsQuery.error
+      ? (playlistsQuery.data ?? [])
+      : [];
+  const countsQuery = usePlaylistTrackCounts(playlists.map((p) => p.id));
+  const counts = countsQuery.data ?? {};
   const hasPlaylists = playlists.length > 0;
+
+  const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormError(null);
+    const data = new FormData(e.currentTarget);
+    const parsed = playlistSchema.safeParse({
+      name: String(data.get("name") ?? ""),
+      isPublic: data.get("isPublic") === "on",
+    });
+    if (!parsed.success) {
+      setFieldError(
+        parsed.error.flatten().fieldErrors.name?.[0] ?? "Invalid playlist",
+      );
+      return;
+    }
+    setFieldError(undefined);
+    try {
+      await createPlaylist.mutateAsync(parsed.data);
+      e.currentTarget.reset();
+      setShowForm(false);
+    } catch (err) {
+      setFormError(
+        err instanceof Error ? err.message : "Could not create playlist.",
+      );
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -47,19 +100,65 @@ export function Library() {
           action={
             <button
               type="button"
+              onClick={() => setShowForm((v) => !v)}
               className="rounded-full border border-line px-4 py-2 text-xs font-medium text-neutral-200 hover:border-neutral-500"
             >
               New playlist
             </button>
           }
         />
+        {showForm ? (
+          <form
+            aria-label="Create playlist"
+            onSubmit={handleCreate}
+            className="mb-3 flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4 sm:p-5"
+          >
+            <Field label="Name" htmlFor="library-name" error={fieldError}>
+              <TextInput
+                id="library-name"
+                name="name"
+                placeholder="Playlist name"
+                required
+                minLength={1}
+                maxLength={120}
+              />
+            </Field>
+            <label
+              htmlFor="library-public"
+              className="flex items-center gap-2 text-sm text-neutral-200"
+            >
+              <input
+                id="library-public"
+                name="isPublic"
+                type="checkbox"
+                className="h-4 w-4 accent-neutral-100"
+              />
+              Public
+            </label>
+            {formError ? (
+              <p role="alert" className="text-xs text-red-300">
+                {formError}
+              </p>
+            ) : null}
+            <div>
+              <Button type="submit" disabled={createPlaylist.isPending}>
+                {createPlaylist.isPending ? "Creating…" : "Create playlist"}
+              </Button>
+            </div>
+          </form>
+        ) : null}
         {hasPlaylists ? (
           <div
             id="library-playlists"
             className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
           >
             {playlists.map((p) => (
-              <Card key={p.id} title={p.name} subtitle={p.count} />
+              <Link key={p.id} to={`/playlists/${p.id}`} className="block">
+                <Card
+                  title={sanitizeText(p.name)}
+                  subtitle={`${counts[p.id] ?? 0} tracks · ${p.is_public ? "Public" : "Private"}`}
+                />
+              </Link>
             ))}
           </div>
         ) : (
@@ -69,6 +168,7 @@ export function Library() {
             action={
               <button
                 type="button"
+                onClick={() => setShowForm(true)}
                 className="rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-black hover:bg-accent-strong"
               >
                 Create playlist

@@ -1,8 +1,20 @@
 import { Link } from "react-router-dom";
 import { EmptyState } from "../components/ui.tsx";
+import { sanitizeText, useSession } from "../hooks/useSession.ts";
+import { useLikedSongs, useToggleLike } from "../hooks/useLikes.ts";
 
 export function LikedSongs() {
-  const liked: { id: string; title: string; artist: string }[] = [];
+  const { user } = useSession();
+  const likedQuery = useLikedSongs();
+  const toggleLike = useToggleLike();
+  const liked = user && !likedQuery.isLoading && !likedQuery.error
+    ? (likedQuery.data ?? [])
+    : [];
+
+  const handleUnlike = (trackId: string) => {
+    if (!user) return;
+    toggleLike.mutate({ trackId, liked: true });
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -24,6 +36,12 @@ export function LikedSongs() {
         </div>
       </div>
 
+      {toggleLike.error ? (
+        <p role="alert" className="text-xs text-red-300">
+          {(toggleLike.error as Error).message}
+        </p>
+      ) : null}
+
       {liked.length === 0 ? (
         <EmptyState
           title="Songs you like will live here"
@@ -41,11 +59,23 @@ export function LikedSongs() {
         <ol className="flex flex-col gap-1">
           {liked.map((t) => (
             <li
-              key={t.id}
+              key={t.track_id}
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-card"
             >
-              <span className="text-sm text-neutral-100">{t.title}</span>
-              <span className="text-sm text-muted">{t.artist}</span>
+              <span className="text-sm text-neutral-100">
+                {sanitizeText(t.track?.title ?? "Unknown track")}
+              </span>
+              <span className="text-sm text-muted">
+                {sanitizeText(t.track?.artist_name ?? "Unknown artist")}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleUnlike(t.track_id)}
+                aria-label="Unlike"
+                className="ml-auto text-xs text-muted hover:text-neutral-100"
+              >
+                Remove
+              </button>
             </li>
           ))}
         </ol>
